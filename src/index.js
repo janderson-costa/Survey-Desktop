@@ -1,5 +1,5 @@
 import { html } from './lib/html/html.js';
-import { DataTable } from './lib/DataTable/prod/main.js';
+import { DataTable } from './lib/DataTable/src/index.js';
 import srvService from './services/srvService.js';
 import { SrvConfig } from '../src/models/srvConfig.js';
 import Menu from './lib/menu/Menu.js';
@@ -190,6 +190,39 @@ function createDataTable() {
 		},
 		footer: {
 			hidden: true,
+		},
+		cells: {
+			type: {
+				display: ({ row, item, value }) => {
+					return html`
+						<select>${__constants.TABLE_ROW_FIELD_TYPES.map(type => /*html*/`
+							<option>${type.displayName}</option>
+						`)}</select>
+					`;
+				},
+			},
+			required: {
+				display: ({ row, item, value }) => {
+					return html`
+						<label class="flex items-center w-fit min-h-[26px] px-2">
+							<input type="checkbox" checked="${() => item.required}" @onChange="${e => {
+								item.required = e.element.checked;
+							}}"/>
+						</label>
+					`;
+				},
+			},
+			readonly: {
+				display: ({ row, item, value }) => {
+					return html`
+						<label class="flex items-center w-fit min-h-[26px] px-2">
+							<input type="checkbox" checked="${() => item.readonly}" @onChange="${e => {
+								item.readonly = e.element.checked;
+							}}"/>
+						</label>
+					`;
+				},
+			},
 		},
 	});
 }

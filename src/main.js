@@ -21,6 +21,17 @@ const _constants = {
 	WINDOW_HEIGHT: 900,
 	EXCEL_API_PATH: 'D:/_dev/Survey/2.0/ExcelAPI/bin/Debug/net48/win-x86/ExcelAPI.exe',
 	TEMP_FILE_PATH: 'D:/_dev/Survey/2.0/Electron/temp/temp.xlsx',
+	TABLE_ROW_FIELD_TYPES: [
+		{ name: '', displayName: 'Texto' },
+		{ name: '', displayName: 'Número' },
+		{ name: '', displayName: 'E-mail' },
+		{ name: '', displayName: 'Data' },
+		{ name: '', displayName: 'Data/Hora' },
+		{ name: '', displayName: 'Opção' },
+		{ name: '', displayName: 'Opção Múltipla' },
+		{ name: '', displayName: 'Imagem' },
+		{ name: '', displayName: 'Assinatura' },
+	],
 };
 const _appData = {};
 let _mainWindow;
