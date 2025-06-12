@@ -41,7 +41,7 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			Toast({ message: `Falha ao abrir o arquivo.` });
+			Toast({ message: `Falha ao abrir o arquivo.` }).show();
 			return;
 		}
 
@@ -98,7 +98,7 @@ export default function srvService() {
 		}
 
 		// Ativa a janela da aplicação
-		// shared.actions.window({ action: 'minimize' });
+		//shared.actions.window({ action: 'minimize' });
 		// setTimeout(() => {
 		// 	shared.actions.window({ action: 'focus' });
 		// }, 2000);
@@ -111,13 +111,15 @@ export default function srvService() {
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FILE_NAME}`, 'method=GetSheets'],
+			args: [`workbookPath=${__constants.TEMP_FILE_PATH}`, 'method=GetSheets'],
 		}).then(result => {
 			if (result.data.stdout)
 				return JSON.parse(result.data.stdout);
+			else
+				Toast({ message: `Falha ao acessar as planilhas.` }).show();
 
 			return [];
-		}).catch(result => null);
+		});
 	}
 }
 

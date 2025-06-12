@@ -150,6 +150,7 @@ let _sheets = [];
 
 	document.body.appendChild($layout);
 	showTable(0);
+	loadTables();
 	lucide.createIcons();
 })();
 
@@ -160,14 +161,14 @@ function setWindowTitle() {
 function createDataTable() {
 	const columns = {
 		//id: { displayName: 'Id', hidden: true },
-		name: { displayName: 'Nome' },
-		description: { displayName: 'Descrição' },
-		type: { displayName: 'Tipo' },
+		name: { displayName: 'Nome', width: 150 },
+		description: { displayName: 'Descrição', width: 250 },
 		//subtype: { displayName: 'Subtipo', hidden: true },
-		value: { displayName: 'Valor' },
+		value: { displayName: 'Valor', width: 250 },
 		//objects: { displayName: 'Objetos', hidden: true },
-		required: { displayName: 'Obrigatório' },
-		readonly: { displayName: 'Editável' },
+		type: { displayName: 'Tipo', width: 150 },
+		required: { displayName: 'Obrigatório', width: 90 },
+		readonly: { displayName: 'Editável', minWidth: 90 },
 	};
 
 	return DataTable({
@@ -177,6 +178,7 @@ function createDataTable() {
 		sort: false,
 		resize: true,
 		//width: 'fit-content',
+		height: '100%',
 		columns: columns,
 		borders: {
 			table: {
@@ -226,6 +228,29 @@ async function openSrvFile() {
 	// });
 }
 
+function loadTables() {
+	console.log(_srvConfig);
+
+	_srvConfig.data.tables.forEach((table, index) => {
+		_dataTables[index].load(table.rows);
+	});
+}
+
+function addTable(name) {
+	const table = _srvConfig.data.tables.find(x => x.name == name);
+
+	// if (!table) return;
+
+	// const dt = createDataTable();
+
+	// dt.setData(table.data);
+	// dt.element.classList.add('dt');
+	// document.querySelector('.body').appendChild(dt.element);
+
+	// _tables.push(dt);
+	// showTable(_tables.length - 1);
+}
+
 function showTable(index = 0) {
 	// Tab ativa
 	_components.tabs.querySelectorAll('.tab').forEach((x, _index)=> {
@@ -245,19 +270,4 @@ function showTable(index = 0) {
 
 	// Total
 	_components.itemsTotal.reload();
-}
-
-function addTable(name) {
-	const table = _srvConfig.data.tables.find(x => x.name == name);
-
-	// if (!table) return;
-
-	// const dt = createDataTable();
-
-	// dt.setData(table.data);
-	// dt.element.classList.add('dt');
-	// document.querySelector('.body').appendChild(dt.element);
-
-	// _tables.push(dt);
-	// showTable(_tables.length - 1);
 }

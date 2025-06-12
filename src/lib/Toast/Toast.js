@@ -16,20 +16,20 @@ const defaultOptions = {
 	onBeforeClose: null, // function
 };
 
-(() => {
-	// Style
-	let link = document.querySelector('link#toast');
+// (() => {
+// 	// Style
+// 	let link = document.querySelector('link#toast');
 
-	if (link) return;
+// 	if (link) return;
 
-	link = document.createElement('link');
-	link.id = 'toast';
-	link.rel = 'stylesheet';
-	link.type = 'text/css';
-	link.href = '/sites/appcatalog/dev/common/lib/toast/prod/style.css?v=' + new Date().getTime();
+// 	link = document.createElement('link');
+// 	link.id = 'toast';
+// 	link.rel = 'stylesheet';
+// 	link.type = 'text/css';
+// 	link.href = 'style.css?v=' + new Date().getTime();
 
-	document.querySelector('head').appendChild(link);
-})();
+// 	document.querySelector('head').appendChild(link);
+// })();
 
 // Container
 let $toasts = document.querySelector('.toasts');

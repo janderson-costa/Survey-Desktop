@@ -3,7 +3,8 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "sass src/static/styles/index.scss src/style.css --no-source-map --watch",
+    "dev": "sass src/static/styles/index.scss src/style.css --style=compressed --no-source-map --watch",
+
     "___copy:assets": "npm run copy:html && npm run copy:images && npm run copy:icons",
     "___copy:html": "copy src\\*.html dist",
     "___copy:images": "copy src\\static\\images\\* dist",
