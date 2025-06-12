@@ -111,7 +111,7 @@ export default function srvService() {
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: ['workbookPath=/temp/temp.xlsx', 'method=GetSheets'],
+			args: [`workbookPath=${__constants.TEMP_FILE_NAME}`, 'method=GetSheets'],
 		}).then(result => {
 			if (result.data.stdout)
 				return JSON.parse(result.data.stdout);

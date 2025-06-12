@@ -20,6 +20,7 @@ const _constants = {
 	WINDOW_WIDTH: 1800,
 	WINDOW_HEIGHT: 900,
 	EXCEL_API_PATH: 'D:/_dev/Survey/2.0/ExcelAPI/bin/Debug/net48/win-x86/ExcelAPI.exe',
+	TEMP_FILE_NAME: 'D:/_dev/Survey/2.0/Electron/temp/temp.xlsx',
 };
 const _appData = {};
 let _mainWindow;

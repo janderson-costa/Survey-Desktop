@@ -1,0 +1,148 @@
+.toasts {
+	position: fixed;
+	z-index: 1000000;
+	inset: 12px;
+	pointer-events: none
+}
+
+.toasts .toast-wrapper {
+	display: flex;
+	position: absolute;
+	left: 0;
+	right: 0;
+	opacity: 0;
+	transform: translateY(0px) scale(1);
+	transition: transform 400ms cubic-bezier(0.2, 1, 0.7, 1), opacity 300ms ease-out;
+	pointer-events: none
+}
+
+.toasts .toast-wrapper.top {
+	top: 0px
+}
+
+.toasts .toast-wrapper.bottom {
+	bottom: 0px
+}
+
+.toasts .toast-wrapper.left {
+	justify-content: start
+}
+
+.toasts .toast-wrapper.center {
+	justify-content: center
+}
+
+.toasts .toast-wrapper.right {
+	justify-content: end
+}
+
+.toasts .toast-wrapper .toast {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	min-width: 200px;
+	max-width: 400px;
+	background-color: #333;
+	border-radius: 6px;
+	box-shadow: 0px 3px 6px 0px rgba(0, 0, 0, .3);
+	pointer-events: all
+}
+
+.toasts .toast-wrapper .toast .toast-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	height: 3.4em;
+	min-width: 3.4em
+}
+
+.toasts .toast-wrapper .toast .toast-icon:empty {
+	min-width: 1.2em
+}
+
+.toasts .toast-wrapper .toast .toast-body {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 1em 1.2em 1em 0
+}
+
+.toasts .toast-wrapper .toast .toast-body .toast-content {
+	display: block;
+	text-align: start;
+	font-family: sans-serif;
+	line-height: 1.4em;
+	color: #fff
+}
+
+.toasts .toast-wrapper .toast .toast-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 3.4em;
+	min-width: 3.4em
+}
+
+.toasts .toast-wrapper .toast .toast-button.hidden {
+	display: none !important
+}
+
+.toasts .toast-wrapper .toast .toast-button button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: none !important;
+	font-size: 1.1em;
+	line-height: 0;
+	color: #fff;
+	background-color: rgba(0, 0, 0, 0);
+	width: 1.6em;
+	height: 1.6em;
+	border: none;
+	border-radius: 4px;
+	padding: 0;
+	opacity: .6;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	user-select: none;
+	cursor: pointer
+}
+
+.toasts .toast-wrapper .toast .toast-button button:hover {
+	background-color: rgba(255, 255, 255, .1);
+	opacity: .9
+}
+
+.toasts .toast-wrapper .toast .toast-button button:active {
+	background-color: rgba(255, 255, 255, .15);
+	opacity: 1
+}
+
+.toasts .toast-wrapper .toast .toast-spin {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 3.4em;
+	min-width: 3.4em
+}
+
+.toasts .toast-wrapper .toast .toast-spin.hidden {
+	display: none !important
+}
+
+.toasts .toast-wrapper .toast .toast-spin::before {
+	content: "";
+	width: 1.4em;
+	height: 1.4em;
+	background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle fill="none" stroke="white" stroke-width="12" opacity="0.3" cx="50" cy="50" r="40"></circle><circle fill="none" stroke="white" stroke-width="12" opacity="0.9" stroke-dasharray="278" stroke-dashoffset="210" cx="50" cy="50" r="40"></circle></svg>');
+	background-size: contain;
+	animation: toast-spin 1.5s linear infinite
+}
+
+@keyframes toast-spin {
+	to {
+		transform: rotate(360deg)
+	}
+}

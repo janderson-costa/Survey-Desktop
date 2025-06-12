@@ -80,7 +80,7 @@ let _sheets = [];
 
 			_sheets = await srvService().getSheets();
 
-			if (_sheets) {
+			if (_sheets.length) {
 				menuTables.options.items = _sheets.map(name => {
 					let $icon = '';
 
