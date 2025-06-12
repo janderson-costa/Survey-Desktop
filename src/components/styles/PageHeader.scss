@@ -1,0 +1,50 @@
+.PageHeader {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 11em;
+	gap: 0.1em;
+
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+
+		.item {
+			font-size: 1.5em;
+			font-weight: 600;
+			padding: 0 0.4em;
+			padding-bottom: 0.1em;
+
+			&.last {
+				font-weight: 700;
+			}
+		}
+
+		button.item {
+			height: 100%;
+		}
+	}
+
+	.description {
+		opacity: 0.75;
+		font-size: 0.95em;
+
+		&:empty {
+			display: none;
+		}
+	}
+
+	&:has(.backbutton) {
+		.description {
+			padding-left: 2.7em;
+		}
+	}
+
+	&:has(.backbutton, .item:first-child:is(a, button)) {
+		.description {
+			padding-left: 3.35em;
+		}
+	}
+}

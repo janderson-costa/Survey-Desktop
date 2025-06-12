@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Toast - Demo</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<h1>Toast</h1>
+	<button onclick="toast1()">Toast 1</button>
+	<button onclick="toast2()">Toast 2</button>
+	<br>
+	<br>
+	Lorem ipsum dolor sit amet consectetur adipisicing elit. Veritatis vitae voluptas alias impedit eum ab accusamus necessitatibus distinctio, non cum voluptate, obcaecati iure fugit quam? Veniam maiores beatae alias illum?
+</body>
+
+<script type="module">
+	import Toast from './Toast.js';
+
+	window.toast1 = toast1;
+	window.toast2 = toast2;
+
+	function toast1() {
+		Toast({
+			// icon: '<span style="font-size: 1.2em;">H</span>',
+			message: `<span>${new Date().toUTCString()}</span> <span>Asdf <b>qwer</b>`,
+			position: 'top center',
+			time: 5,
+		});
+	}
+
+	function toast2() {
+		Toast({
+			icon: '<span style="font-size: 1.2em;">H</span>',
+			message: `${new Date().toUTCString()} Lorem, ipsum dolor sit amet consectetur adipisicing elit. Saepe incidunt pariatur distinctio nobis rerum doloremque, fugit possimus assumenda accusantium, eos hic non deserunt reprehenderit porro aliquid libero quae placeat voluptate!`,
+			position: 'bottom center',
+			time: 5,
+		});
+	}
+</script>
+
+<style>
+	body {
+		margin: 0;
+		padding: 32px;
+		font-family: sans-serif;
+		font-size: 13px;
+	}
+
+	button {
+		padding: 6px 12px;
+	}
+</style>
+
+</html>

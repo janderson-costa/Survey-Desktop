@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Toast - Demo</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<button onclick="toast()">Toast</button>
+</body>
+
+<script type="module">
+	import Toast from './Toast.js';
+
+	window.toast = toast;
+
+	function toast() {
+		Toast({
+			icon: '(i)',
+			message: `<span>${new Date().toUTCString()}</span> <span>Asdfdf asdfasdf asdf</span> <span>Asdfdf asdfasdf asdf</span>`,
+			position: 'top center',
+			time: 4
+		});
+	}
+</script>
+
+<style>
+	* {
+		font-size: 13px;
+	}
+</style>
+
+</html>

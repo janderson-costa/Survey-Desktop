@@ -1,0 +1,24 @@
+{
+  "name": "electron-app",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "sass src/static/styles/index.scss src/style.css --no-source-map --watch",
+    "___copy:assets": "npm run copy:html && npm run copy:images && npm run copy:icons",
+    "___copy:html": "copy src\\*.html dist",
+    "___copy:images": "copy src\\static\\images\\* dist",
+    "___copy:icons": "type src\\lib\\lucide\\* > dist\\icons.js",
+    "___dev": "npm run copy:assets && sass src/index.scss dist/style.css --no-source-map --watch | esbuild src/main.js --outfile=dist/main.js --bundle --platform=node --target=esnext --watch",
+    "___prod": "npm run copy:assets && sass src/index.scss dist/style.css --no-source-map --style=compressed && esbuild src/main.js --outfile=dist/main.js --bundle --platform=node --target=esnext --minify"
+  },
+  "author": "Janderson Costa",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^36.2.1",
+    "electron-reload": "^2.0.0-alpha.1"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "open": "^10.1.2"
+  }
+}

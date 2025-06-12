@@ -1,0 +1,27 @@
+.RowProgressBar {
+	display: flex;
+	align-items: center;
+	visibility: hidden;
+	padding-top: 0.3em;
+	gap: 0.6em;
+
+	.bar {
+		width: 100%;
+		background-color: rgba(0, 0, 0, 0.12);
+		border-radius: 1.6em;
+
+		.progress {
+			background-color: #333;
+			height: 0.8em;
+			min-width: 0.8em;
+			border-radius: 1.6em;
+		}
+	}
+
+	.value {
+		white-space: nowrap;
+		font-size: 0.9em;
+		line-height: 100%;
+		word-spacing: 0.3em;
+	}
+}

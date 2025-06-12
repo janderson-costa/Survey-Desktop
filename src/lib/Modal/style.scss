@@ -1,0 +1,162 @@
+.modal-overlay {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(255, 255, 255, 0);
+	z-index: 1000;
+
+	.disabled {
+		opacity: 0.6;
+		user-select: none;
+		pointer-events: none;
+	}
+
+	&.modal-visible {
+		animation: modal-show 0.125s ease-out forwards;
+	}
+
+	&.modal-invisible {
+		animation: modal-hide 0.125s ease forwards;
+	}
+
+	.modal {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		background-color: #fff;
+		border-radius: 8px;
+		width: 360px;
+		padding: 1.5em;
+		gap: 1.5em;
+		box-sizing: border-box;
+		box-shadow:
+			0 0 2px rgba(0, 0, 0, 0.2),
+			0 calc(32* 0.5px) calc((32* 1px)) rgba(0, 0, 0, 0.24);
+
+		.modal-title {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 1.1em;
+			font-weight: 700;
+
+			.modal-spin {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 0;
+				transition: opacity 0.1s ease-out;
+
+				&::before {
+					content: "";
+					width: 1.4em;
+					height: 1.4em;
+					background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle fill="none" stroke="black" stroke-width="12" opacity="0.2" cx="50" cy="50" r="40"></circle><circle fill="none" stroke="black" stroke-width="12" stroke-dasharray="278" stroke-dashoffset="210" cx="50" cy="50" r="40"></circle></svg>');
+					background-size: contain;
+					animation: modal-spin 1.5s linear infinite;
+				}
+
+				&.visible {
+					opacity: 1;
+				}
+			}
+		}
+
+		.modal-content {
+			width: fit-content;
+		}
+
+		.modal-buttons {
+			display: flex;
+			justify-content: flex-end;
+			padding-top: 0.5em;
+			gap: 1.25em;
+
+			button {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-wrap: nowrap;
+				box-sizing: border-box;
+				height: 2.5em;
+				min-width: 90px;
+				font-size: 1em;
+				font-weight: 600;
+				background-color: #fff;
+				padding: 0;
+				border: 1px solid #999;
+				border-radius: 6px;
+				user-select: none;
+				cursor: default;
+
+				&:hover {
+					background-color: rgba(slategray, 0.12);
+				}
+
+				&:focus {
+					caret-color: transparent; // oculta o cursor
+				}
+
+				&:active {
+					background-color: rgba(slategray, 0.24);
+				}
+
+				&.primary {
+					color: #fff;
+					background-color: #333;
+					border: 1px solid #333;
+				}
+
+				&.primary:hover {
+					opacity: 0.9;
+				}
+
+				&.primary:active {
+					opacity: 0.8;
+				}
+			}
+		}
+
+		button,
+		a {
+			transition: background-color 0.075s;
+		}
+	}
+}
+
+@keyframes modal-show {
+	from {
+		opacity: 0;
+		scale: 0.975;
+	}
+
+	to {
+		opacity: 1;
+		scale: 1;
+	}
+}
+
+@keyframes modal-hide {
+	from {
+		opacity: 1;
+	}
+
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes modal-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}

@@ -1,0 +1,8 @@
+@use '../../static/styles/base' as *;
+
+.ActionBar {
+	.divider {
+		border-left-width: 1.5px;
+		margin: 0 0.15em;
+	}
+}

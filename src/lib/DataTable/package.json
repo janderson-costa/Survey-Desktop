@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "sass src/styles/style.scss dev/style.css --no-source-map --watch | esbuild src/index.js --bundle --outfile=dev/main.js --platform=neutral --target=esnext --watch",
+    "prod": "sass src/styles/style.scss prod/style.css --no-source-map --style=compressed && esbuild src/index.js --bundle --outfile=prod/main.js --platform=neutral --target=esnext --sourcemap=inline --minify"
+  }
+}

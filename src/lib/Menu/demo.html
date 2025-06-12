@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Menu - Demo</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<h1>Menu - Demo</h1>
+	<button type="button" name="button1">RIGH BUTTON</button>
+	<button type="button" name="button2">RIGH BUTTON: LEFT</button>
+	<button type="button" name="button3" type="button">LEFT BUTTON: RIGHT</button>
+	<button type="button" name="button4" type="button">LEFT BUTTON: TOP LEFT</button>
+	<button type="button" name="button5" type="button">LEFT BUTTON: TOP RIGHT</button>
+</body>
+
+<script type="module">
+	import Menu from './Menu.js';
+
+	const menuDemo = Menu({
+		//trigger: document.querySelector('#button1'),
+		top: 0,
+		left: 0,
+		position: 'left',
+		items: [
+			{ icon: '✏️', name: 'Item 1 of menu.', id: 'item1', onClick: () => console.log('Item 1 of menu.') },
+			{ icon: '🔍', name: 'Item 2 of menu.', id: 'item2' },
+			{ divider: true },
+			{ icon: '🛠️', name: 'Item 3 of menu.', id: 'item3' },
+		],
+		onShow: context => {
+			console.log('onShow: Default');
+		},
+		onHide: context => {
+			console.log('onHide: Default');
+		},
+	});
+
+	// button1: RIGHT
+	document.querySelector('button[name=button1]').addEventListener('contextmenu', event => {
+		event.stopPropagation();
+		event.preventDefault();
+
+		menuDemo.show({
+			x: event.x,
+			y: event.y,
+			onShow: menu => {
+				// Acessando itens do menu
+				menu.options.items.find(x => x.id == 'item2').element.classList.add('disabled');
+			},
+		});
+	});
+
+	// button2: RIGHT
+	document.querySelector('button[name=button2]').addEventListener('contextmenu', event => {
+		event.stopPropagation();
+		event.preventDefault();
+
+		menuDemo.show({
+			trigger: event.target.closest('button'),
+		});
+	});
+
+	// button3: LEFT
+	document.querySelector('button[name=button3]').addEventListener('click', event => {
+		event.stopPropagation();
+
+		menuDemo.show({
+			trigger: event.target.closest('button'),
+			position: 'right',
+		});
+	});
+
+	// button4: TOP LEFT
+	document.querySelector('button[name=button4]').addEventListener('click', event => {
+		event.stopPropagation();
+
+		menuDemo.show({
+			trigger: event.target.closest('button'),
+			position: 'top left',
+		});
+	});
+
+	// button4: TOP RIGHT
+	document.querySelector('button[name=button5]').addEventListener('click', event => {
+		event.stopPropagation();
+
+		menuDemo.show({
+			trigger: event.target.closest('button'),
+			position: 'top right',
+		});
+	});
+
+</script>
+
+<style>
+	body {
+		margin: 100px 0;
+		padding: 32px;
+		font-family: sans-serif;
+		font-size: 14px;
+	}
+
+	button {
+		min-width: 200px;
+		margin-right: 16px;
+		padding: 8px;
+	}
+
+	button:hover {
+		background-color: #f0f0f0;
+	}
+
+	button:active {
+		background-color: #e0e0e0;
+	}
+</style>
+
+</html>

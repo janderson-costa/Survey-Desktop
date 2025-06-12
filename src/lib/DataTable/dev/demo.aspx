@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>DataTable - Demo</title>
+	<link rel="stylesheet" href="style.css">
+	<style>
+		* {
+			font-family: sans-serif;
+		}
+
+		body {
+			height: 100vh;
+			box-sizing: border-box;
+			margin: 0;
+			padding: 24px;
+		}
+
+		.dt {
+			font-size: 13px;
+		}
+	</style>
+</head>
+
+<body>
+	<h3>DataTable - Demo</h3>
+	<br>
+	<div class="place"></div>
+</body>
+
+<script type="module">
+	// import { DataTable } from '../src/index.js';
+	import { DataTable } from './main.js';
+
+	const dt = DataTable({
+		place: document.querySelector('.place'), // *** obrigatório ***
+		height: 400,
+		checkbox: false,
+		sort: true,
+		resize: true,
+		disabled: false,
+		header: {
+			hidden: false,
+			disabled: false,
+		},
+		columns: { // *** obrigatório ***
+			id: { displayName: 'Id', hidden: true },
+			col1: { // ColumnOptions
+				displayName: 'Column 1',
+				width: 200,
+				minWidth: 200,
+				resizable: true,
+				disabled: true,
+				style: { color: 'red' }
+			},
+			col2: {
+				displayName: 'Column 2',
+				style: { minHeight: '60px' },
+			},
+			col3: { displayName: 'Column 3' },
+		},
+		rows: {
+			selectOnClick: true,
+			allowMultipleSelection: true,
+		},
+		cells: {
+			col1: {
+				display: ({ row, item, value }) => {
+					let a = document.createElement('a');
+
+					a.innerHTML = value;
+					a.href = 'javascript:';
+					a.style.color = 'blue';
+
+					return a;
+				},
+			},
+			col2: {
+				display: ({ row, item, value }) => `${item.col1} - <b>${value}</b>`,
+			},
+			col3: {
+				display: ({ row, item, value }) => {
+					return `${value} - ${new Date().toUTCString()}`;
+				},
+				style: { color: 'red' },
+			},
+		},
+		footer: {
+			hidden: false,
+			disabled: false,
+			content: createElement(/*html*/`
+				<div style="display: flex; gap: 16px;">
+					<button>Add</button>
+					<button>Remove</button>
+				</div>
+			`),
+		},
+		borders: {
+			table: {
+				top: true,
+				bottom: true,
+				all: true,
+				radius: 6,
+			},
+			rows: true,
+			cells: true,
+		},
+		data: [ // *** obrigatório ***
+			{ id: 1, col1: 'Value example', col2: 'Value example', col3: 'Value example' },
+			{ id: 2, col1: 'Value exampleeeeeeeeeeee', col2: 'Value example', col3: 'Value example' },
+			{ id: 3, col1: 'Value exampleeeeeeeeeeee', col2: 'Value example', col3: 'Value example 555' },
+			{ id: 4, col1: 'Value exampleeeeeeeeeeee', col2: 'Value example', col3: 'Value example' },
+			{ id: 5, col1: 'Value exampleeeeeeeeeeee', col2: 'Value example', col3: 'Value example' },
+			{ id: 6, col1: 'Value example example example example', col2: 'Value example', col3: 'Value example' },
+			{ id: 7, col1: 'Value example', col2: 'Value example 2', col3: 'Value example' },
+			{ id: 8, col1: 'Value example', col2: 'Value example', col3: 'Value example 234' },
+			{ id: 9, col1: 'Value example', col2: 'Value example 5', col3: 'Value example' },
+			{ id: 10, col1: 'Value example', col2: 'Value example', col3: 'Value example' },
+			{ id: 11, col1: 'Value example', col2: 'Value example', col3: 'Value example' },
+			{ id: 12, col1: 'Value example', col2: 'Value example 456', col3: 'Value example' },
+			{ id: 13, col1: 'Value example', col2: 'Value example', col3: 'Value example' },
+			{ id: 14, col1: 'Value example', col2: 'Value example 0', col3: 'Value example 00' },
+		],
+		onAddRow: ({ row }) => {
+			//console.log(row);
+		},
+		onSelectRows: ({ rows }) => {
+			console.log(rows);
+		},
+		onUnselectRows: () => {
+			console.log(event);
+		},
+		onUpdateRow: ({ row, fields }) => {
+			console.log(row, fields);
+		},
+		onRemoveRows: () => {
+			console.log('onRemoveRows', dt.data());
+		},
+		onDoubleClickRow: ({ row, event }) => {
+			console.log(row, event);
+		},
+		onResizeColumn: ({ column, widths }) => {
+			console.log(column, widths);
+		},
+		onCopyClip: ({ text }) => { // ctrl+c
+			console.log(text);
+		},
+		onClickOut: ({ event }) => {
+			// cancela a chamada de onUnselectRows()
+			event.cancelUnselectRows = !!event.target.closest('.actionbar');
+
+			console.log(event);
+		},
+		onScrollEnd: ({ event }) => {
+			console.log('onScrollEnd');
+		},
+	});
+
+	//dt.table.load([]);
+
+	const $info = createElement(/*html*/`
+		<div>
+			Info
+		</div>
+	`);
+
+	dt.footer.content($info);
+
+	console.log(dt);
+
+	window.dt = dt;
+
+	function createElement(html) {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(html, 'text/html');
+
+		return doc.body.firstChild;
+	}
+</script>
+
+</html>

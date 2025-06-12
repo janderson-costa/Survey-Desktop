@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tooltip - Demo</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+	<h2>Tooltip - Demo</h2>
+	<div class="buttons">
+		<a href="javascript:" class="btn1" onclick="console.log('Button 1 clicked')">
+			Tooltip top
+		</a>
+		<button class="btn2" onclick="console.log('Button 2 clicked')">
+			Tooltip bottom
+		</button>
+		<button class="btn3" onclick="console.log('Button 3 clicked')">
+			Tooltip left
+		</button>
+		<button class="btn4" onclick="console.log('Button 4 clicked')">
+			Tooltip right
+		</button>
+	</div>
+</body>
+
+<script type="module">
+	import Tooltip from './Tooltip.js';
+
+	Tooltip(document.querySelector('.btn1'), {
+		position: 'top',
+		text: /*html*/`Dexto do Tooltip, Texto do <b>Tooltip</b> Texto do Tooltip, Texto do <b>Tooltip</b> Texto do Tooltip.`,
+		offset: 8,
+		style: {
+			maxWidth: 200,
+			fontSize: 14,
+			padding: '14px 16px',
+		}
+	});
+
+	Tooltip(document.querySelector('.btn2'), {
+		position: 'bottom',
+		text: 'Dexto do Tooltip',
+		style: {
+			fontSize: 14,
+		}
+	});
+
+	Tooltip(document.querySelector('.btn3'), {
+		position: 'left',
+		text: 'Texto do Tooltip',
+	});
+
+	Tooltip(document.querySelector('.btn4'), {
+		position: 'right',
+		text: 'Texto do Tooltip, Texto do <b>Tooltip</b> Texto do Tooltip, Texto do Tooltip Texto do Tooltip.',
+		style: {
+			maxWidth: 150,
+		}
+	});
+</script>
+
+<style>
+	* {
+		font-family: sans-serif;
+	}
+
+	body {
+		display: block;
+		height: 100vh;
+		margin: 0;
+		padding: 24px;
+		box-sizing: border-box;
+	}
+
+	.buttons {
+		display: flex;
+		justify-content: center;
+		padding: 24px 0;
+		gap: 24px;
+	}
+
+	button {
+		font-weight: 500;
+		white-space: nowrap;
+	}
+</style>
+
+</html>
