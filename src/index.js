@@ -17,15 +17,16 @@ const _components = {
 	buttonAddTable: null,
 	itemsTotal: null,
 };
-const _dataTables = [];
 let _srvConfig = SrvConfig();
+let _dataTables = [];
+let _controlsTopLeftGroupId = sessionStorage.getItem('state') == 'opened' ? 1 : 0;
 
-(async () => {
+init();
+
+async function init() {
 	window.__constants = await shared.constants();
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
-
-
-	console.log(_srvConfig);
+	_dataTables = [];
 
 	setWindowTitle();
 
@@ -52,12 +53,10 @@ let _srvConfig = SrvConfig();
 		align: 'top left',
 	});
 	const $controlsTopLeft = html`<div>${() => {
-		const groupId = sessionStorage.getItem('controlsTopLeftGroup') || 0;
-
 		_controlsTopLeft.forEach(control => {
 			control.hidden = true;
 
-			if (control.group <= groupId)
+			if (control.group <= _controlsTopLeftGroupId)
 				control.hidden = false;
 		});
 
@@ -168,11 +167,12 @@ let _srvConfig = SrvConfig();
 	_components.buttonAddTable = $buttonAddTable;
 	_components.itemsTotal = $itemsTotal;
 
+	document.body.innerHTML = '';
 	document.body.appendChild($layout);
 	showTable(0);
 	loadTables();
 	lucide.createIcons();
-})();
+}
 
 function setWindowTitle() {
 	document.title = `${__constants.APP_NAME} - ${__constants.APP_VERSION}`;
@@ -324,12 +324,12 @@ function createDataTable() {
 			},
 		},
 		onSelectRows: ({ rows }) => {
-			sessionStorage.setItem('controlsTopLeftGroup', 2);
+			_controlsTopLeftGroupId = 2;
 			_components.controlsTopLeft.reload();
 			lucide.createIcons();
 		},
 		onUnselectRows: () => {
-			sessionStorage.setItem('controlsTopLeftGroup', 1);
+			_controlsTopLeftGroupId = 1;
 			_components.controlsTopLeft.reload();
 			lucide.createIcons();
 		},
@@ -350,8 +350,9 @@ async function newSrvFile() {
 	if (!_srvConfig) return;
 
 	shared.appData({ key: 'srvConfig', value: _srvConfig });
-	sessionStorage.setItem('controlsTopLeftGroup', 1);
-	location.reload();
+	_controlsTopLeftGroupId = 1;
+	sessionStorage.setItem('state', 'opened');
+	init();
 }
 
 async function openSrvFile() {
@@ -360,8 +361,9 @@ async function openSrvFile() {
 	if (!_srvConfig) return;
 
 	shared.appData({ key: 'srvConfig', value: _srvConfig });
-	sessionStorage.setItem('controlsTopLeftGroup', 1);
-	location.reload();
+	_controlsTopLeftGroupId = 1;
+	sessionStorage.setItem('state', 'opened');
+	init();
 
 	// uiService().load({
 	// 	srvConfig: _srvConfig,
@@ -378,7 +380,7 @@ function loadTables() {
 	_srvConfig.data.tables.forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
-	
+
 	// Total
 	_components.itemsTotal.reload();
 }

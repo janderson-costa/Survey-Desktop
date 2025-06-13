@@ -36,6 +36,8 @@ export function Row(table, options) {
 				select(true, event);
 		});
 		$row.addEventListener('dblclick', event => {
+			if (event.target.tagName == 'INPUT' || event.target.tagName == 'TEXTAREA') return;
+
 			if (!table.options.rows.selectOnClick)
 				return;
 
