@@ -2,10 +2,14 @@ export { SrvConfig, SrvTable, SrvTableRow, SrvInfo };
 
 function SrvConfig() {
 	const config = {
-		data: {
-			tables: [] // SrvTable[]
+		versions: {
+			desktop: typeof __contants != 'undefined' ? __contants.APP_VERSION : null,
+			mobile: null,
 		},
-		info: {}, // SrvInfo
+		data: {
+			tables: [SrvTable()]
+		},
+		info: SrvInfo(),
 	};
 
 	return config;
@@ -15,7 +19,7 @@ function SrvTable() {
 	const table = {
 		name: '',
 		disabled: false,
-		rows: [], // SrvTableRow[]
+		rows: [SrvTableRow()],
 	};
 
 	return table;

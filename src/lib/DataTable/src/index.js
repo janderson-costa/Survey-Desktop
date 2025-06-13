@@ -29,11 +29,13 @@ export function DataTable(options) {
 
 		// remove a seleção ao clicar fora
 		if (!event.target.closest('.dt-header') && !event.target.closest('.dt-body')) {
-			if (options.onClickOut)
-				options.onClickOut({ event });
+			let cancel = false;
 
-			// event.cancelUnselectRows: boolean - Propriedade customizada definida em options.onClickOut() para cancelar a desseleção das linhas.
-			if (!options.checkbox && !event.cancelUnselectRows)
+			if (options.onClickOut)
+				cancel = !options.onClickOut({ event });
+
+			// Cancelar a desseleção das linhas
+			if (!options.checkbox && !cancel)
 				_table.unselectRows(event);
 		}
 	}

@@ -7,27 +7,33 @@ import Icon from './components/Icon.js';
 import Buttons from "./components/Buttons.js";
 
 const _components = {
+	layout: null,
+	header: null,
 	controlsTopLeft: null,
 	controlsTopRight: null,
+	body: null,
+	footer: null,
 	tabs: null,
 	buttonAddTable: null,
 	itemsTotal: null,
-	layout: null,
 };
 const _dataTables = [];
 let _srvConfig = SrvConfig();
-let _sheets = [];
 
 (async () => {
 	window.__constants = await shared.constants();
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
 
+
+	console.log(_srvConfig);
+
 	setWindowTitle();
 
+	// Monta a página
 	const _controlsTopLeft = [
-		{ group: 0, title: 'Novo', icon: Icon('new'), onClick: () => console.log('onClick') },
+		{ group: 0, title: 'Novo', icon: Icon('new'), onClick: () => newSrvFile() },
 		{ group: 0, title: 'Abrir', icon: Icon('open'), onClick: () => openSrvFile() },
-		{ group: 1, title: 'Salvar', icon: Icon('save'), onClick: () => console.log('onClick') },
+		{ group: 1, title: 'Salvar', icon: Icon('save'), onClick: () => saveSrvFile() },
 		{ group: 1, title: 'Informações do arquivo', icon: Icon('info'), onClick: () => console.log('onClick') },
 		{ group: 1, divider: true },
 		{ group: 1, title: 'Carregar dados nas planilhas', icon: Icon('load'), onClick: () => console.log('onClick') },
@@ -45,16 +51,27 @@ let _sheets = [];
 		items: [],
 		align: 'top left',
 	});
-	const $controlsTopLeft = createControlsTopLeft(_controlsTopLeft);
+	const $controlsTopLeft = html`<div>${() => {
+		const groupId = sessionStorage.getItem('controlsTopLeftGroup') || 0;
+
+		_controlsTopLeft.forEach(control => {
+			control.hidden = true;
+
+			if (control.group <= groupId)
+				control.hidden = false;
+		});
+
+		return Buttons(_controlsTopLeft);
+	}}</div>`;
 	const $controlsTopRight = Buttons([
 		{ title: 'Visualizar no dispositivo móvel', icon: Icon('smartphone'), onClick: () => console.log('onClick') },
 	]);
-	const $tables = _srvConfig.data.tables.map(() => {
-		const dt = createDataTable();
+	const $tables = _srvConfig.data.tables.map(table => {
+		const $dt = createDataTable();
 
-		_dataTables.push(dt);
+		_dataTables.push($dt);
 
-		return dt.element;
+		return $dt.element;
 	});
 	const $tabs = html`
 		<div class="tabs flex gap-2 mr-2" @show="${() => !!_srvConfig.data.tables.length}">${() =>
@@ -78,10 +95,10 @@ let _sheets = [];
 		<button type="button" class="button add-sheet min-w-10 h-10" title="Adicionar planilha" @onClick="${async e => {
 			e.event.stopPropagation();
 
-			_sheets = await srvService().getSheets();
+			const sheets = await srvService().getSheets();
 
-			if (_sheets.length) {
-				menuTables.options.items = _sheets.map(name => {
+			if (sheets.length) {
+				menuTables.options.items = sheets.map(name => {
 					let $icon = '';
 
 					if (_srvConfig.data.tables.find(x => x.name == name)) {
@@ -142,8 +159,11 @@ let _sheets = [];
 
 	// Componentes
 	_components.layout = $layout;
+	_components.header = $layout.querySelector('.header');
+	_components.body = $layout.querySelector('.body');
 	_components.controlsTopLeft = $controlsTopLeft;
 	_components.controlsTopRight = $controlsTopRight;
+	_components.footer = $layout.querySelector('.footer');
 	_components.tabs = $tabs;
 	_components.buttonAddTable = $buttonAddTable;
 	_components.itemsTotal = $itemsTotal;
@@ -161,10 +181,10 @@ function setWindowTitle() {
 function createDataTable() {
 	const columns = {
 		//id: { displayName: 'Id', hidden: true },
-		name: { displayName: 'Nome', width: 150 },
-		description: { displayName: 'Descrição', width: 250 },
+		name: { displayName: 'Nome', minWidth: 150 },
+		description: { displayName: 'Descrição', minWidth: 150 },
 		//subtype: { displayName: 'Subtipo', hidden: true },
-		value: { displayName: 'Valor', width: 250 },
+		value: { displayName: 'Valor' },
 		//objects: { displayName: 'Objetos', hidden: true },
 		type: { displayName: 'Tipo', width: 150 },
 		required: { displayName: 'Obrigatório', width: 90 },
@@ -182,8 +202,9 @@ function createDataTable() {
 		columns: columns,
 		borders: {
 			table: {
-				top: false,
-				bottom: false,
+				//all: true,
+				// top: false,
+				// bottom: false,
 			},
 			rows: true,
 			cells: false,
@@ -191,20 +212,98 @@ function createDataTable() {
 		footer: {
 			hidden: true,
 		},
+		rows: {
+			selectOnClick: true,
+		},
 		cells: {
-			type: {
+			name: {
 				display: ({ row, item, value }) => {
 					return html`
-						<select>${__constants.TABLE_ROW_FIELD_TYPES.map(type => /*html*/`
-							<option>${type.displayName}</option>
+						<input type="text" value="${value}" @onChange="${e => {
+							item.name = e.element.value.trim();
+						}}"/>
+					`;
+				}
+			},
+			description: {
+				display: ({ row, item, value }) => {
+					return html`
+						<textarea @onChange="${e => {
+							item.description = e.element.value.trim();
+						}}">${value}</textarea>
+					`;
+				}
+			},
+			type: {
+				display: ({ row, item, value }) => {
+					const $select =  html`
+						<select @onChange="${e => {
+							item.type = e.element.value;
+						}}">${__constants.TABLE_ROW_FIELD_TYPES.map(type => /*html*/`
+							<option value="${type.displayName}">${type.displayName}</option>
 						`)}</select>
+					`;
+
+					$select.value = value;
+
+					return $select;
+				},
+			},
+			value: {
+				display: ({ row, item, value }) => {
+					if (item.type == 'Texto') {
+						return html`
+							<input type="text"/>
+						`;
+					} else if (item.type == 'Número') {
+						return html`
+							<input type="number"/>
+						`;
+					} else if (item.type == 'E-mail') {
+						return html`
+							<input type="email"/>
+						`;
+					} else if (item.type == 'Data') {
+						return html`
+							<input type="date"/>
+						`;
+					} else if (item.type == 'Data/Hora') {
+						return html`
+							<input type="datetime-local"/>
+						`;
+					} else if (item.type == 'Horário') {
+						return html`
+							<input type="time"/>
+						`;
+					} else if (item.type == 'Opção') {
+						const $select =  html`
+							<select @onChange="${e => {
+								item.value = e.element.value;
+							}}">${__constants.TABLE_ROW_FIELD_TYPES.map(type => /*html*/`
+								<option value="${type.displayName}">${type.displayName}</option>
+							`)}</select>
+						`;
+
+						$select.value = value;
+
+						return $select;
+					} else if (item.type == 'Opcão Múltipla') {
+						//
+					} else if (item.type == 'Imagem') {
+						//
+					} else if (item.type == 'Assinatura') {
+						//
+					}
+
+					return html`
+						<input type="text"/>
 					`;
 				},
 			},
 			required: {
 				display: ({ row, item, value }) => {
 					return html`
-						<label class="flex items-center w-fit min-h-[26px] px-2">
+						<label class="flex items-center w-fit min-h-[26px] px-1.5 opacity-90">
 							<input type="checkbox" checked="${() => item.required}" @onChange="${e => {
 								item.required = e.element.checked;
 							}}"/>
@@ -215,7 +314,7 @@ function createDataTable() {
 			readonly: {
 				display: ({ row, item, value }) => {
 					return html`
-						<label class="flex items-center w-fit min-h-[26px] px-2">
+						<label class="flex items-center w-fit min-h-[26px] px-1.5 opacity-90">
 							<input type="checkbox" checked="${() => item.readonly}" @onChange="${e => {
 								item.readonly = e.element.checked;
 							}}"/>
@@ -224,6 +323,20 @@ function createDataTable() {
 				},
 			},
 		},
+		onSelectRows: ({ rows }) => {
+			sessionStorage.setItem('controlsTopLeftGroup', 2);
+			_components.controlsTopLeft.reload();
+			lucide.createIcons();
+		},
+		onUnselectRows: () => {
+			sessionStorage.setItem('controlsTopLeftGroup', 1);
+			_components.controlsTopLeft.reload();
+			lucide.createIcons();
+		},
+		onClickOut: ({ event }) => {
+			// Cancela a chamada de onUnselectRows()
+			return false;
+		},
 	});
 }
 
@@ -231,17 +344,14 @@ async function teste() {
 	//..
 }
 
-function createControlsTopLeft(controls, group) {
-	group = sessionStorage.getItem('controlsTopLeft') || 0;
+async function newSrvFile() {
+	_srvConfig = await srvService().newFile();
 
-	controls.forEach(control => {
-		control.hidden = true;
+	if (!_srvConfig) return;
 
-		if (control.group <= group)
-			control.hidden = false;
-	});
-
-	return Buttons(controls);
+	shared.appData({ key: 'srvConfig', value: _srvConfig });
+	sessionStorage.setItem('controlsTopLeftGroup', 1);
+	location.reload();
 }
 
 async function openSrvFile() {
@@ -249,9 +359,8 @@ async function openSrvFile() {
 
 	if (!_srvConfig) return;
 
-	_sheets = [];
 	shared.appData({ key: 'srvConfig', value: _srvConfig });
-	sessionStorage.setItem('controlsTopLeft', 1);
+	sessionStorage.setItem('controlsTopLeftGroup', 1);
 	location.reload();
 
 	// uiService().load({
@@ -261,12 +370,17 @@ async function openSrvFile() {
 	// });
 }
 
-function loadTables() {
-	console.log(_srvConfig);
+function saveSrvFile() {
+	srvService().saveFile(_srvConfig);
+}
 
+function loadTables() {
 	_srvConfig.data.tables.forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
+	
+	// Total
+	_components.itemsTotal.reload();
 }
 
 function addTable(name) {
@@ -285,6 +399,12 @@ function addTable(name) {
 }
 
 function showTable(index = 0) {
+	if (!_srvConfig.data.tables[index].name) {
+		_components.body.classList.add('!hidden');
+		_components.footer.classList.add('!hidden');
+		return;
+	}
+
 	// Tab ativa
 	_components.tabs.querySelectorAll('.tab').forEach((x, _index)=> {
 		x.classList.remove('active');

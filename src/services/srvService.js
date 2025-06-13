@@ -6,9 +6,83 @@ let _isDialogOpen = false;
 
 export default function srvService() {
 	return {
+		newFile,
 		openFile,
 		getSheets,
+		saveFile,
 	};
+
+	async function newFile() {
+		if (_isDialogOpen) return;
+
+		_isDialogOpen = true;
+
+		let result = await shared.actions.showOpenDialog({
+			title: 'Novo',
+			filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }],
+			properties: ['openFile'],
+		});
+
+		_isDialogOpen = false;
+
+		if (result.canceled)
+			return;
+
+		const toast = Toast({ message: 'Não foi possível criar o novo template.' });
+
+		// Limpa a pasta temp
+		await shared.actions.clearFolder({ folderPath: './temp' });
+
+		let filePath = result.filePaths[0];
+		let ext = filePath.substring(filePath.lastIndexOf('.'));
+
+		// Copia p arquivo da planilha paã pasta temp
+		result = await shared.actions.copyFile({
+			fromFilePath: filePath,
+			toFilePath: './temp/temp' + ext,
+		});
+
+		if (result.error) {
+			toast.show();
+			return;
+		}
+
+		// Cria o arquivo config.json
+		const srvConfig = SrvConfig();
+
+		result = await shared.actions.writeFile({
+			filePath: './temp/config.json',
+			data: JSON.stringify(srvConfig),
+		});
+
+		if (result.error) {
+			toast.show();
+			return;
+		}
+
+		// Abre temp.xls(x) no Excel
+		result = await shared.actions.openFile({
+			filePath: './temp/temp' + ext,
+		});
+
+		if (result.error) {
+			toast.show();
+			return;
+		}
+
+		return new Promise(resolve => {
+			// Aguarda o Excel abrir
+			const interval = setInterval(async () => {
+				const sheets = await getSheets(false);
+
+				if (sheets.length) {
+					clearInterval(interval);
+					srvConfig.data.tables[0].name = sheets[0];
+					resolve(srvConfig);
+				}
+			}, 500);
+		});
+	}
 
 	async function openFile() {
 		if (_isDialogOpen) return;
@@ -28,6 +102,7 @@ export default function srvService() {
 
 		let srvConfig = SrvConfig();
 		const filePath = result.filePaths[0];
+		const toast = Toast({ message: `Falha ao abrir o arquivo.` });
 
 		// Limpa a pasta temp
 		await shared.actions.clearFolder({ folderPath: './temp' });
@@ -41,7 +116,7 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			Toast({ message: `Falha ao abrir o arquivo.` }).show();
+			toast.show();
 			return;
 		}
 
@@ -93,7 +168,7 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			Toast({ message: `Falha ao abrir a planilha.` });
+			toast.show();
 			return;
 		}
 
@@ -106,19 +181,27 @@ export default function srvService() {
 		return srvConfig;
 	}
 
-	function getSheets() {
+	function getSheets(notify = true) {
 		// Retorna os nomes das planilhas disponíveis no arquivo do Excel.
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
 			args: [`workbookPath=${__constants.TEMP_FILE_PATH}`, 'method=GetSheets'],
 		}).then(result => {
-			if (result.data.stdout)
+			if (result.data.stdout) {
 				return JSON.parse(result.data.stdout);
-			else
+			} else if (notify) {
 				Toast({ message: `Falha ao acessar as planilhas.` }).show();
+			}
 
 			return [];
+		});
+	}
+
+	async function saveFile(srvConfig) {
+		await shared.actions.writeFile({
+			filePath: './temp/config.json',
+			data: JSON.stringify(srvConfig),
 		});
 	}
 }
@@ -136,6 +219,7 @@ function parseFormdata(data) {
 		const table = SrvTable();
 
 		table.name = planilha;
+		table.rows = [];
 
 		data.filter(data => data.Planilha == planilha).forEach(item => {
 			// Grupo
@@ -146,7 +230,6 @@ function parseFormdata(data) {
 
 				row.isGroup = true;
 				row.name = item.Grupo;
-
 				table.rows.push(row);
 			}
 
@@ -154,7 +237,7 @@ function parseFormdata(data) {
 			const row = SrvTableRow();
 
 			row.id = item.Id;
-			row.objects = item.Objetos;
+			row.objects = JSON.parse(item.Objetos || '[]');
 			row.name = item.Nome;
 			row.description = item.Descricao;
 			row.type = item.Tipo;

@@ -148,10 +148,8 @@
 			console.log(text);
 		},
 		onClickOut: ({ event }) => {
-			// cancela a chamada de onUnselectRows()
-			event.cancelUnselectRows = !!event.target.closest('.actionbar');
-
-			console.log(event);
+			// Cancela a chamada de onUnselectRows()
+			return !!event.target.closest('.actionbar');
 		},
 		onScrollEnd: ({ event }) => {
 			console.log('onScrollEnd');
