@@ -1,4 +1,4 @@
-const { ipcMain, dialog } = require('electron');
+const { ipcMain, dialog, BrowserWindow } = require('electron');
 const AdmZip = require('adm-zip');
 const fs = require('fs/promises');
 const open = require('open').default;
@@ -29,8 +29,12 @@ async function nodeAPI({ constants, appData, window }) {
 	});
 
 	// Arquivos e pastas
+	ipcMain.handle('showMessageBox', (event, options = {}) => {
+		return dialog.showMessageBox(BrowserWindow.getFocusedWindow(), options);
+	});
+
 	ipcMain.handle('showOpenDialog', (event, options = {}) => {
-		return dialog.showOpenDialog(options);
+		return dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), options);
 	});
 
 	ipcMain.handle('readFile', (event, options = {}) => {
@@ -125,7 +129,16 @@ async function nodeAPI({ constants, appData, window }) {
 	ipcMain.handle('zipFile', async (event, options = {}) => {
 		const fileZip = new AdmZip();
 
-		await fileZip.addLocalFolderPromise(options.fromFolderPath);
+		await fileZip.addLocalFolderPromise(options.fromFolderPath, { filter: fileName => {
+			// Filtra os arquivos que não serão incluídos no arquivo zip.
+			return (
+				fileName !== 'formdata.json' &&
+				fileName !== 'options.json' &&
+				fileName !== 'report.json' &&
+				fileName !== 'spreadsheet.xlsx' &&
+				!fileName.startsWith('~$')
+			);
+		}});
 
 		return fileZip.writeZipPromise(options.toFilePath, { overwrite: true });
 	});

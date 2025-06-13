@@ -1,8 +1,10 @@
 import { html } from './lib/html/html.js';
 import { DataTable } from './lib/DataTable/src/index.js';
 import srvService from './services/srvService.js';
-import { SrvConfig } from '../src/models/srvConfig.js';
+import { State } from '../src/models/State.js';
+import { SrvConfig } from './models/SrvConfig.js';
 import Menu from './lib/menu/Menu.js';
+import Modal from './lib/Modal/Modal.js';
 import Icon from './components/Icon.js';
 import Buttons from "./components/Buttons.js";
 
@@ -17,18 +19,35 @@ const _components = {
 	buttonAddTable: null,
 	itemsTotal: null,
 };
+let _state = State();
 let _srvConfig = SrvConfig();
 let _dataTables = [];
-let _controlsTopLeftGroupId = sessionStorage.getItem('state') == 'opened' ? 1 : 0;
+let _controlsTopLeftGroupId = 0;
+let _temp;
 
 init();
 
 async function init() {
 	window.__constants = await shared.constants();
+	_state = await shared.appData({ key: 'state' }) || _state;
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
 	_dataTables = [];
+	_controlsTopLeftGroupId = _state.opened ? 1 : 0;
+	_temp = true;
 
 	setWindowTitle();
+
+	// Observa alteraçoes em _srvConfig
+	const srvConfig = observe(_srvConfig, {
+		onChange: async () => {
+			if (_temp) return;
+
+			_state.saved = false;
+			await shared.appData({ key: 'state', value: _state });
+			await shared.appData({ key: 'srvConfig', value: _srvConfig });
+			setWindowTitle();
+		},
+	});
 
 	// Monta a página
 	const _controlsTopLeft = [
@@ -65,7 +84,7 @@ async function init() {
 	const $controlsTopRight = Buttons([
 		{ title: 'Visualizar no dispositivo móvel', icon: Icon('smartphone'), onClick: () => console.log('onClick') },
 	]);
-	const $tables = _srvConfig.data.tables.map(table => {
+	const $tables = srvConfig.data.tables.map(table => {
 		const $dt = createDataTable();
 
 		_dataTables.push($dt);
@@ -73,8 +92,8 @@ async function init() {
 		return $dt.element;
 	});
 	const $tabs = html`
-		<div class="tabs flex gap-2 mr-2" @show="${() => !!_srvConfig.data.tables.length}">${() =>
-			_srvConfig.data.tables.map((table, index) => html`
+		<div class="tabs flex gap-2 mr-2" @show="${() => !!srvConfig.data.tables.length}">${() =>
+			srvConfig.data.tables.map((table, index) => html`
 				<button type="button" class="tab button items-start h-10 px-3 !gap-3 whitespace-nowrap" @onClick="${() => showTable(index)}" @onContextmenu="${e => {
 					Menu({
 						trigger: e.element,
@@ -100,7 +119,7 @@ async function init() {
 				menuTables.options.items = sheets.map(name => {
 					let $icon = '';
 
-					if (_srvConfig.data.tables.find(x => x.name == name)) {
+					if (srvConfig.data.tables.find(x => x.name == name)) {
 						$icon = Icon('check');
 					}
 
@@ -144,7 +163,7 @@ async function init() {
 				<div class="body flex-1 overflow-auto p-4">${$tables}</div>
 
 				<!-- footer -->
-				<div class="footer flex items-start border-t border-gray-300 px-4 py-4" @show="${() => !!_srvConfig.data.tables.length}">
+				<div class="footer flex items-start border-t border-gray-300 px-4 py-4" @show="${() => !!srvConfig.data.tables.length}">
 					<div class="flex gap-2 overflow-x-auto">${$tabs}</div>
 					${$buttonAddTable}
 					${$itemsTotal}
@@ -170,12 +189,13 @@ async function init() {
 	document.body.innerHTML = '';
 	document.body.appendChild($layout);
 	showTable(0);
-	loadTables();
+	loadTables(srvConfig);
 	lucide.createIcons();
+	_temp = null;
 }
 
 function setWindowTitle() {
-	document.title = `${__constants.APP_NAME} - ${__constants.APP_VERSION}`;
+	document.title = `${__constants.APP_NAME} - ${__constants.APP_VERSION} ${_state.saved ? '' : '*'}`;
 }
 
 function createDataTable() {
@@ -253,30 +273,42 @@ function createDataTable() {
 				display: ({ row, item, value }) => {
 					if (item.type == 'Texto') {
 						return html`
-							<input type="text"/>
+							<textarea @onChange="${e => {
+								item.value = e.element.value;
+							}}">${item.value}</textarea>
 						`;
 					} else if (item.type == 'Número') {
 						return html`
-							<input type="number"/>
+							<input type="number" value="${item.value}" @onChange="${e => {
+								item.value = e.element.value;
+							}}"/>
 						`;
 					} else if (item.type == 'E-mail') {
 						return html`
-							<input type="email"/>
+							<input type="email" value="${item.value}" @onChange="${e => {
+								item.value = e.element.value;
+							}}"/>
 						`;
 					} else if (item.type == 'Data') {
 						return html`
-							<input type="date"/>
+							<input type="date" value="${item.value}" @onChange="${e => {
+								item.value = e.element.value;
+							}}"/>
 						`;
 					} else if (item.type == 'Data/Hora') {
 						return html`
-							<input type="datetime-local"/>
+							<input type="datetime-local" value="${item.value}" @onChange="${e => {
+								item.value = e.element.value;
+							}}"/>
 						`;
 					} else if (item.type == 'Horário') {
 						return html`
-							<input type="time"/>
+							<input type="time" value="${item.value}" @onChange="${e => {
+								item.value = e.element.value;
+							}}"/>
 						`;
 					} else if (item.type == 'Opção') {
-						const $select =  html`
+						const $select = html`
 							<select @onChange="${e => {
 								item.value = e.element.value;
 							}}">${__constants.TABLE_ROW_FIELD_TYPES.map(type => /*html*/`
@@ -296,7 +328,9 @@ function createDataTable() {
 					}
 
 					return html`
-						<input type="text"/>
+						<input type="text" value="${item.value}" @onChange="${e => {
+							item.value = e.element.value;
+						}}"/>
 					`;
 				},
 			},
@@ -345,24 +379,36 @@ async function teste() {
 }
 
 async function newSrvFile() {
+	if (!_state.saved) {
+		saveSrvFile(!_state.saved, newSrvFile);
+		return;
+	}
+
 	_srvConfig = await srvService().newFile();
 
 	if (!_srvConfig) return;
 
-	shared.appData({ key: 'srvConfig', value: _srvConfig });
+	_state.opened = true;
+	await shared.appData({ key: 'state', value: _state });
+	await shared.appData({ key: 'srvConfig', value: _srvConfig });
 	_controlsTopLeftGroupId = 1;
-	sessionStorage.setItem('state', 'opened');
 	init();
 }
 
 async function openSrvFile() {
+	if (!_state.saved) {
+		saveSrvFile(!_state.saved, newSrvFile);
+		return;
+	}
+
 	_srvConfig = await srvService().openFile();
 
 	if (!_srvConfig) return;
 
-	shared.appData({ key: 'srvConfig', value: _srvConfig });
+	_state.opened = true;
+	await shared.appData({ key: 'state', value: _state });
+	await shared.appData({ key: 'srvConfig', value: _srvConfig });
 	_controlsTopLeftGroupId = 1;
-	sessionStorage.setItem('state', 'opened');
 	init();
 
 	// uiService().load({
@@ -372,12 +418,46 @@ async function openSrvFile() {
 	// });
 }
 
-function saveSrvFile() {
-	srvService().saveFile(_srvConfig);
+async function saveSrvFile(confirm = false, callback) {
+	let modal;
+
+	// Confirmar se deseja salvar as alterações
+	if (confirm) {
+		modal = Modal({
+			title: 'Survey',
+			content: 'Deseja salvar as alterações?',
+			width: 360,
+			hideOut: true,
+			buttons: [
+				{ name: 'Sim', primary: true, onClick: () => save()},
+				{ name: 'Não', onClick: () => modal.hide() },
+			],
+		});
+
+		modal.show();
+	} else {
+		save();
+	}
+
+	async function save() {
+		let result = await srvService().saveFile(_srvConfig);
+
+		console.log(result);
+
+		// _state.saved = true;
+		// await shared.appData({ key: 'state', value: _state });
+		// setWindowTitle();
+
+		// if (modal)
+		// 	modal.hide();
+
+		// if (callback)
+		// 	callback();
+	}
 }
 
-function loadTables() {
-	_srvConfig.data.tables.forEach((table, index) => {
+function loadTables(srvConfig) {
+	srvConfig.data.tables.forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
 
@@ -425,4 +505,43 @@ function showTable(index = 0) {
 
 	// Total
 	_components.itemsTotal.reload();
+}
+
+
+// ÚTIL
+
+function observe(obj, { onChange, onDelete }) {
+	// Observa alterações no objeto e seus filhos recursivamente e retorna um objeto proxy.
+
+	if (typeof obj !== 'object' || obj === null)
+		return obj;
+
+	return new Proxy(obj, {
+		get(target, prop, receiver) {
+			const value = Reflect.get(target, prop, receiver);
+
+			return typeof value === 'object' && value !== null
+				? observe(value, { onChange, onDelete }) // Aplica proxy também nos filhos
+				: value;
+		},
+		set(target, prop, value, receiver) {
+			const old = target[prop];
+			const success = Reflect.set(target, prop, value, receiver);
+
+			if (success && old !== value && onChange) {
+				onChange({ target, prop, value });
+			}
+
+			return success;
+		},
+		deleteProperty(target, prop) {
+			const success = Reflect.deleteProperty(target, prop);
+
+			if (success && onDelete) {
+				onDelete({ target, prop });
+			}
+
+			return success;
+		}
+	});
 }

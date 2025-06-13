@@ -1,8 +1,5 @@
-import { SrvConfig, SrvTable, SrvTableRow, SrvInfo } from '../models/srvConfig.js';
+import { SrvConfig, SrvTable, SrvTableRow, SrvInfo } from '../models/SrvConfig.js';
 import Toast from '../lib/Toast/Toast.js';
-import Result from '../models/result.js';
-
-let _isDialogOpen = false;
 
 export default function srvService() {
 	return {
@@ -13,22 +10,16 @@ export default function srvService() {
 	};
 
 	async function newFile() {
-		if (_isDialogOpen) return;
-
-		_isDialogOpen = true;
-
 		let result = await shared.actions.showOpenDialog({
 			title: 'Novo',
 			filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }],
 			properties: ['openFile'],
 		});
 
-		_isDialogOpen = false;
-
 		if (result.canceled)
 			return;
 
-		const toast = Toast({ message: 'Não foi possível criar o novo template.' });
+		const toast = Toast({ message: 'Não foi possível criar o template.' });
 
 		// Limpa a pasta temp
 		await shared.actions.clearFolder({ folderPath: './temp' });
@@ -85,17 +76,11 @@ export default function srvService() {
 	}
 
 	async function openFile() {
-		if (_isDialogOpen) return;
-
-		_isDialogOpen = true;
-
 		let result = await shared.actions.showOpenDialog({
 			title: 'Abrir',
 			filters: [{ name: 'Survey', extensions: ['srv'] }],
 			properties: ['openFile'],
 		});
-
-		_isDialogOpen = false;
 
 		if (result.canceled)
 			return;
@@ -103,6 +88,8 @@ export default function srvService() {
 		let srvConfig = SrvConfig();
 		const filePath = result.filePaths[0];
 		const toast = Toast({ message: `Falha ao abrir o arquivo.` });
+
+		await shared.appData({ key: 'srvFilePath', value: filePath });
 
 		// Limpa a pasta temp
 		await shared.actions.clearFolder({ folderPath: './temp' });
@@ -181,12 +168,38 @@ export default function srvService() {
 		return srvConfig;
 	}
 
+	async function saveFile(srvConfig) {
+		//const toast = Toast({ message: 'Não foi possível salvar.' });
+
+		// Atualiza o arquivo config.json
+		let result = await shared.actions.writeFile({
+			filePath: './temp/config.json',
+			data: JSON.stringify(srvConfig),
+		});
+
+		// Salva a planilha temp
+		result = shared.actions.execute({
+			executablePath: __constants.EXCEL_API_PATH,
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=SaveWorkbook'],<<<
+		}).then(result => {
+			console.log(result);
+		});
+
+		// Empacota o arquivo .srv
+		const srvFilePath = await shared.appData({ key: 'srvFilePath' });
+
+		result = await shared.actions.zipFile({
+			fromFolderPath: './temp',
+			toFilePath: srvFilePath,
+		});
+	}
+
 	function getSheets(notify = true) {
 		// Retorna os nomes das planilhas disponíveis no arquivo do Excel.
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FILE_PATH}`, 'method=GetSheets'],
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=GetSheets'],<<<<<
 		}).then(result => {
 			if (result.data.stdout) {
 				return JSON.parse(result.data.stdout);
@@ -195,13 +208,6 @@ export default function srvService() {
 			}
 
 			return [];
-		});
-	}
-
-	async function saveFile(srvConfig) {
-		await shared.actions.writeFile({
-			filePath: './temp/config.json',
-			data: JSON.stringify(srvConfig),
 		});
 	}
 }

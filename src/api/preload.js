@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('shared', {
 	constants: () => ipcRenderer.invoke('constants'),
 	appData: ({ key, value }) => ipcRenderer.invoke('appData', { key, value }),
 	actions: {
+		showMessageBox: options => ipcRenderer.invoke('showMessageBox', options),
 		showOpenDialog: options => ipcRenderer.invoke('showOpenDialog', options),
 		readFile: options => ipcRenderer.invoke('readFile', options),
 		writeFile: options => ipcRenderer.invoke('writeFile', options),
