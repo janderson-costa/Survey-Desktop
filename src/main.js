@@ -54,32 +54,25 @@ const createWindow = () => {
 		{
 			label: 'Arquivo',
 			submenu: [
-				{ label: 'Novo' },
-				{ label: 'Abrir' },
-				{ label: 'Salvar' },
-				{ label: 'Salvar Como' },
+				{ label: 'Novo', click: () => actions('newFile') },
+				{ label: 'Abrir', click: () => actions('openFile') },
+				{ label: 'Salvar', click: () => actions('saveFile') },
+				{ label: 'Salvar Como', click: () => actions('saveFileAs') },
 				{ type: 'separator' },
-				{ label: 'Enviar por E-mail' },
+				{ label: 'Enviar por E-mail', click: () => actions('sendByEmail') },
 				{ type: 'separator' },
-				{ label: 'Ir para o Local do Arquivo' },
+				{ label: 'Abrir Local do Arquivo', click: () => actions('openFileLocation') },
 				{ type: 'separator' },
-				{ label: 'Sair' },
+				{ label: 'Sair', click: () => actions('exit') },
 			],
 		},
 		{
 			label: 'Exibir',
 			submenu: [
-				{ label: 'Informações do Arquivo' },
+				{ label: 'Informações do Arquivo', click: () => actions('showFileInfo') },
 				{ type: 'separator' },
-				{
-					label: 'Atualizar janela', click: () => {
-						_mainWindow.webContents.reloadIgnoringCache();
-					},
-				},
-				{
-					role: 'toggleDevTools',
-					accelerator: 'f12',
-				}
+				{ label: 'Atualizar janela', click: () => _mainWindow.webContents.reloadIgnoringCache() },
+				{ role: 'toggleDevTools', accelerator: 'f12' }
 			],
 		},
 		{
@@ -114,3 +107,9 @@ app.whenReady().then(() => {
 		window: _mainWindow
 	});
 });
+
+function actions(functionName) {
+	// window.actions: Implementados no arquivo index.js
+
+	_mainWindow.webContents.executeJavaScript(`window.actions.${functionName}()`);
+}

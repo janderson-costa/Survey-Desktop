@@ -1,4 +1,4 @@
-export function State() {
+export function AppState() {
 	// Estado da aplicação de forma geral.
 
 	const state = {

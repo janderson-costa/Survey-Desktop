@@ -1,0 +1,23 @@
+.dt {
+    .dt-header-cell {
+        border-bottom: 1px solid #666 !important;
+    }
+
+    .cell-border-bottom {
+        border-bottom: 1px solid #aaa !important;
+    }
+
+    .cell-border-right {
+        border-right: 1px solid #aaa !important;
+    }
+
+    .scrollable {
+        padding-bottom: 40px;
+    }
+}
+
+.modal {
+    .modal-content {
+        user-select: text !important;
+    }
+}

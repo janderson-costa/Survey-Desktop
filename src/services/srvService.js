@@ -180,7 +180,7 @@ export default function srvService() {
 		// Salva a planilha temp
 		result = shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=SaveWorkbook'],<<<
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=SaveWorkbook'],// ! <<<<<<<<<<
 		}).then(result => {
 			console.log(result);
 		});
@@ -199,7 +199,7 @@ export default function srvService() {
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=GetSheets'],<<<<<
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=GetSheets'],// ! <<<<<<<<<<
 		}).then(result => {
 			if (result.data.stdout) {
 				return JSON.parse(result.data.stdout);
