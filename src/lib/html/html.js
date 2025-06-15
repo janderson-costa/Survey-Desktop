@@ -52,19 +52,16 @@ function html(templateString, ...expressions) {
 
 			const index = i - 1;
 			const part = compressTemplateString(htmlParts[index]);
-			const onEventRegex = /@on[a-zA-Z0-9]*="$/; // Termina com @on<eventName>="
+			const eventRegex = /@[a-zA-Z0-9]*="$/; // Termina com @<eventName>=" - Ex.: @onClick=", @onChange=", @show="
 
 			let expression = _expressions[index];
 			let isFunction = typeof expression == 'function';
 
-			if (isElement(expression)) {
+			if (_isElement(expression)) {
 				expression = `<element>${index}</element>`;
-			} else if (isFunction && (part.endsWith('>') || !onEventRegex.test(part))) {
+			} else if (isFunction && (part.endsWith('>') || !eventRegex.test(part))) {
 				isFunction = false;
-				expression = expression();
-
-				if (isElement(expression))
-					expression = `<function>${index}</function>`;
+				expression = `<function>${index}</function>`;
 			}
 
 			return (acc + (isFunction ? index : expression) + cur)
@@ -82,10 +79,6 @@ function html(templateString, ...expressions) {
 
 		function compressTemplateString(text) {
 			return typeof text == 'string' ? text.replace(/\n|\t/g, '') : '';
-		}
-
-		function isElement(any) {
-			return any instanceof Element || any[0] instanceof Element;
 		}
 	}
 
@@ -105,13 +98,14 @@ function html(templateString, ...expressions) {
 		elements.forEach(element => {
 			const index = element.textContent;
 			const expression = _expressions[index];
-			const result = element.tagName.toLowerCase() == 'function' ? expression() : expression;
-			const children = result instanceof Array ? result : [result];
+			const result = typeof expression == 'function' ? expression() : expression;
+			const nodes = result instanceof Array ? result : [result];
 
-			children.forEach((child, index) => {
-				element.before(child);
+			nodes.forEach((node, index) => {
+				if (node instanceof Element)
+					element.before(node);
 
-				if (index == children.length - 1)
+				if (index == nodes.length - 1)
 					element.remove();
 			});
 		});
@@ -130,23 +124,26 @@ function html(templateString, ...expressions) {
 
 			Array.from(element.attributes).forEach(attr => {
 				const attrName = attr.name.toLowerCase();
+				const expression = _expressions[attr.value];
 
 				// @onEvent
 				if (attrName.startsWith('@on')) {
-					const func = _expressions[attr.value];
 					const _attrName = attrName.substring(3);
 
 					element.addEventListener(_attrName, event => {
 						_xPath = _getXPath(event.target);
-						func({ event, element, reload });
+						expression({ event, element, reload });
 					});
 
-					element.removeAttribute(attrName);
+					element.removeAttribute(attrName); // Necessário para evitar novas novas execuções a partir de outras instâncias de html``
 				}
 
 				// @show
 				if (attrName == '@show') {
-					element.classList[attr.value != 'true' ? 'add' : 'remove']('hidden');
+					let show = typeof expression == 'function' ? expression() : attr.value == 'true';
+
+					element.classList[show ? 'remove' : 'add']('hidden');
+					element.removeAttribute(attrName); // Necessário para evitar novas novas execuções a partir de outras instâncias de html``
 				}
 			});
 		}
@@ -176,6 +173,10 @@ function html(templateString, ...expressions) {
 
 
 	// INTERNO
+
+	function _isElement(any) {
+		return any instanceof Element || any[0] instanceof Element;
+	}
 
 	function _getElementByXPath(xPath) {
 		if (!xPath)

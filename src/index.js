@@ -211,7 +211,7 @@ function createUI(srvConfig) {
 	const $toolbarActionsRight = Buttons(_toolbarActionsRight);
 
 	const $tabs = html`
-		<div class="tabs flex gap-2" @show="${() => !!srvConfig.data.tables.length}">${() =>
+		<div class="tabs flex gap-2" @show="${!!srvConfig.data.tables.length}">${() =>
 			srvConfig.data.tables.map((table, index) => html`
 				<button type="button" class="tab button items-start h-10 px-3 !gap-3 whitespace-nowrap" @onClick="${() => showTable(index)}">
 					<span>${table.name}</span>
@@ -262,7 +262,6 @@ function createUI(srvConfig) {
 	}}</span>`;
 
 	const $toolbarTable = html`<div>${() => {
-		console.log(123);
 		// _toolbarTable.forEach(control => {
 		// 	if (!_activeDataTable || !_activeDataTable.rows.some(x => x.isSelected) && index > 1)
 		// 		control.hidden = true;
