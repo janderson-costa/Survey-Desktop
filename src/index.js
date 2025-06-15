@@ -22,20 +22,17 @@ const _columns = {
 };
 let _ui = {
 	layout: null,
-	header: null,
-	controlsTopLeft: null,
-	controlsTopRight: null,
-	body: null,
-	footer: null,
+	toolbarActionsLeft: null,
+	toolbarActionsRight: null,
+	toolbarTable: null,
+	tables: null,
 	tabs: null,
-	buttonAddTable: null,
 	itemsTotal: null,
 };
 let _appState = AppState();
 let _srvConfig = SrvConfig();
 let _dataTables = [];
 let _activeDataTable;
-let _controlsTopLeftGroupId = 0;
 let _temp;
 
 window.actions = {
@@ -52,7 +49,6 @@ async function init() {
 	_appState = await shared.appData({ key: 'state' }) || _appState;
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
 	_dataTables = [];
-	_controlsTopLeftGroupId = _appState.opened ? 1 : 0;
 	_temp = true;
 
 	setWindowTitle();
@@ -97,7 +93,6 @@ async function newFile() {
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
-	_controlsTopLeftGroupId = 1;
 	init();
 }
 
@@ -114,7 +109,6 @@ async function openFile() {
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
-	_controlsTopLeftGroupId = 1;
 	init();
 }
 
@@ -178,53 +172,46 @@ function setWindowTitle() {
 }
 
 function createUI(srvConfig) {
-	const _controlsTopLeft = [
-		{ group: 0, title: 'Novo', icon: Icon('new'), onClick: () => newFile() },
-		{ group: 0, title: 'Abrir', icon: Icon('open'), onClick: () => openFile() },
-		{ group: 1, title: 'Salvar', icon: Icon('save'), onClick: () => saveFile() },
-		{ group: 1, title: 'Informações do arquivo', icon: Icon('info'), onClick: () => showFileInfo() },
-		{ group: 1, divider: true },
-		{ group: 1, title: 'Carregar dados nas planilhas', icon: Icon('load'), onClick: () => console.log('onClick') },
-		{ group: 1, title: 'Limpar dados das planilhas', icon: Icon('clear'), onClick: () => console.log('onClick') },
-		{ group: 1, title: 'Enviar por E-mail', icon: Icon('send'), onClick: () => console.log('onClick') },
-		{ group: 1, divider: true },
-		{ group: 1, title: 'Adicionar grupo', icon: Icon('addGroup'), onClick: () => console.log('onClick') },
-		{ group: 1, title: 'Adicionar item', icon: Icon('add'), onClick: () => console.log('onClick') },
-		{ group: 2, title: 'Mover item selecionado para cima', icon: Icon('arrowUp'), onClick: () => console.log('onClick') },
-		{ group: 2, title: 'Mover item selecionado para baixo', icon: Icon('arrowDown'), onClick: () => console.log('onClick') },
-		{ group: 2, title: 'Excluir item selecionado', icon: Icon('close'), onClick: () => console.log('onClick') },
+	const _menu = Menu({
+		items: [],
+		align: 'bottom left',
+	});
+
+	const _toolbarActionsLeft = [
+		{ title: 'Novo', icon: Icon('new'), onClick: () => newFile() },
+		{ title: 'Abrir', icon: Icon('open'), onClick: () => openFile() },
+		{ title: 'Salvar', icon: Icon('save'), onClick: () => saveFile() },
+		{ title: 'Informações do arquivo', icon: Icon('info'), onClick: () => showFileInfo() },
+		{ divider: true },
+		{ title: 'Carregar dados nas planilhas', icon: Icon('load'), onClick: () => console.log('onClick') },
+		{ title: 'Limpar dados das planilhas', icon: Icon('clear'), onClick: () => console.log('onClick') },
+		{ title: 'Enviar por E-mail', icon: Icon('send'), onClick: () => console.log('onClick') },
+	];
+	const _toolbarActionsRight = [
+		{ title: 'Visualizar no dispositivo móvel', icon: Icon('smartphone'), onClick: () => console.log('onClick') }
+	];
+	const _toolbarTable = [
+		{ divider: true },
+		{ title: 'Adicionar grupo', icon: Icon('addGroup'), onClick: () => console.log('onClick') },
+		{ title: 'Adicionar item', icon: Icon('add'), onClick: () => console.log('onClick') },
+		{ title: 'Mover item selecionado para cima', icon: Icon('arrowUp'), onClick: () => console.log('onClick') },
+		{ title: 'Mover item selecionado para baixo', icon: Icon('arrowDown'), onClick: () => console.log('onClick') },
+		{ title: 'Excluir item selecionado', icon: Icon('close'), onClick: () => console.log('onClick') },
 	];
 
-	const _menuTables = Menu({
-		items: [],
-		align: 'top left',
-	});
-
-	const $controlsTopLeft = html`<div>${() => {
-		_controlsTopLeft.forEach(control => {
-			control.hidden = true;
-
-			if (control.group <= _controlsTopLeftGroupId)
-				control.hidden = false;
+	const $toolbarActionsLeft = html`<div>${() => {
+		_toolbarActionsLeft.forEach((control, index) => {
+			if (!_appState.opened && index > 1)
+				control.hidden = true;
 		});
 
-		return Buttons(_controlsTopLeft);
+		return Buttons(_toolbarActionsLeft);
 	}}</div>`;
 
-	const $controlsTopRight = Buttons([
-		{ title: 'Visualizar no dispositivo móvel', icon: Icon('smartphone'), onClick: () => console.log('onClick') },
-	]);
-
-	const $tables = srvConfig.data.tables.map(table => {
-		const $dt = createDataTable();
-
-		_dataTables.push($dt);
-
-		return $dt.element;
-	});
+	const $toolbarActionsRight = Buttons(_toolbarActionsRight);
 
 	const $tabs = html`
-		<div class="tabs flex gap-2 mr-2" @show="${() => !!srvConfig.data.tables.length}">${() =>
+		<div class="tabs flex gap-2" @show="${() => !!srvConfig.data.tables.length}">${() =>
 			srvConfig.data.tables.map((table, index) => html`
 				<button type="button" class="tab button items-start h-10 px-3 !gap-3 whitespace-nowrap" @onClick="${() => showTable(index)}">
 					<span>${table.name}</span>
@@ -240,7 +227,7 @@ function createUI(srvConfig) {
 			const sheets = await srvService().getSheets();
 
 			if (sheets.length) {
-				_menuTables.options.items = sheets.map(name => {
+				_menu.options.items = sheets.map(name => {
 					let $icon = '';
 
 					if (srvConfig.data.tables.find(x => x.name == name)) {
@@ -249,7 +236,7 @@ function createUI(srvConfig) {
 
 					return ({ icon: $icon, name: name, onClick: () => addTable(name) });
 				});
-				_menuTables.show({
+				_menu.show({
 					trigger: e.element.closest('button'),
 					position: 'top',
 				});
@@ -260,7 +247,7 @@ function createUI(srvConfig) {
 		}}">${Icon('add')}</button>
 	`;
 
-	const $itemsTotal = html`<span class="items-total flex items-center h-10 ml-4">${() => {
+	const $itemsTotal = html`<span class="flex items-center h-10">${() => {
 		let total;
 
 		$tabs.querySelectorAll('.tab').forEach(($tab, index) => {
@@ -274,26 +261,47 @@ function createUI(srvConfig) {
 		return total ? `${total} item(s)` : '';
 	}}</span>`;
 
+	const $toolbarTable = html`<div>${() => {
+		console.log(123);
+		// _toolbarTable.forEach(control => {
+		// 	if (!_activeDataTable || !_activeDataTable.rows.some(x => x.isSelected) && index > 1)
+		// 		control.hidden = true;
+		// });
+
+		return Buttons(_toolbarTable);
+	}}</div>`;
+
+	const $tables = srvConfig.data.tables.map(table => {
+		const $dt = createDataTable();
+
+		_dataTables.push($dt);
+
+		return $dt.element;
+	});
+
 	const $layout = html`
 		<div class="layout flex h-screen">
-			<div class="flex flex-col w-screen">
-				<!-- header -->
-				<div class="header flex flex-col gap-4 px-4 py-4">
-					<div class="buttons flex justify-between">
-						<div class="left">${$controlsTopLeft}</div>
-						<div class="right">${$controlsTopRight}</div>
+			<div class="flex flex-col justify-between w-screen h-screen">
+				<div>
+					<!-- toolbar-actions -->
+					<div class="toolbar-actions flex justify-between gap-4 px-4 py-4">
+						<div class="left">${$toolbarActionsLeft}</div>
+						<div class="right">${_appState.opened ? $toolbarActionsRight : ''}</div>
+					</div>
+
+					<!-- toolbar-table -->
+					<div class="toolbar-actions flex gap-2 px-4 pb-4">
+						${_appState.opened ? $buttonAddTable : ''}
+						<div class="flex gap-2 w-max-[600px] overflow-x-auto">${$tabs}</div>
+						${$toolbarTable}
 					</div>
 				</div>
 
-				<!-- body -->
-				<div class="body flex-1 overflow-auto px-4">${$tables}</div>
+				<!-- tables -->
+				<div class="tables flex-1 overflow-auto px-4">${$tables}</div>
 
 				<!-- footer -->
-				<div class="footer flex items-start px-4 py-4" @show="${() => !!srvConfig.data.tables.length}">
-					<div class="flex gap-2 overflow-x-auto">${$tabs}</div>
-					${$buttonAddTable}
-					${$itemsTotal}
-				</div>
+				<div class="footer flex gap-4 px-4 py-4">${$itemsTotal}</div>
 			</div>
 
 			<!-- app viewer -->
@@ -303,14 +311,12 @@ function createUI(srvConfig) {
 
 	return {
 		layout: $layout,
-		header: $layout.querySelector('.header'),
-		body: $layout.querySelector('.body'),
-		controlsTopLeft: $controlsTopLeft,
-		controlsTopRight: $controlsTopRight,
-		footer: $layout.querySelector('.footer'),
-		tabs: $tabs,
-		buttonAddTable: $buttonAddTable,
+		toolbarActionsLeft: $toolbarActionsLeft,
+		toolbarActionsRight: $toolbarActionsRight,
+		toolbarTable: $toolbarTable,
 		itemsTotal: $itemsTotal,
+		tabs: $tabs,
+		tables: $layout.querySelector('.tables'),
 	};
 }
 
@@ -478,13 +484,11 @@ function createDataTable() {
 			},
 		},
 		onSelectRows: ({ rows }) => {
-			_controlsTopLeftGroupId = 2;
-			_ui.controlsTopLeft.reload();
+			_ui.toolbarTable.reload();
 			lucide.createIcons();
 		},
 		onUnselectRows: () => {
-			_controlsTopLeftGroupId = 1;
-			_ui.controlsTopLeft.reload();
+			_ui.toolbarTable.reload();
 			lucide.createIcons();
 		},
 		onClickOut: ({ event }) => {
@@ -507,8 +511,8 @@ function showTable(index = 0) {
 	_activeDataTable = _dataTables[index];
 
 	if (!_srvConfig.data.tables[index].name) {
-		_ui.body.classList.add('!hidden');
-		_ui.footer.classList.add('!hidden');
+		_ui.tables.classList.add('!hidden');
+		_ui.toolbarTable.classList.add('!hidden');
 		return;
 	}
 
@@ -529,9 +533,8 @@ function showTable(index = 0) {
 	});
 
 	// Recarrega a barra de botões de ação
-	_controlsTopLeftGroupId = _activeDataTable.rows.some(x => x.isSelected) ? 2 : 1;
-	_ui.controlsTopLeft.reload();
-	lucide.createIcons();
+	// _ui.toolbarActionsLeft.reload();
+	// lucide.createIcons();
 
 	// Total
 	_ui.itemsTotal.reload();
@@ -546,7 +549,7 @@ function addTable(name) {
 
 	// dt.setData(table.data);
 	// dt.element.classList.add('dt');
-	// document.querySelector('.body').appendChild(dt.element);
+	// document.querySelector('.tables').appendChild(dt.element);
 
 	// _tables.push(dt);
 	// showTable(_tables.length - 1);
