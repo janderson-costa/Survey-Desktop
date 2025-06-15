@@ -135,7 +135,7 @@ function html(templateString, ...expressions) {
 						expression({ event, element, reload });
 					});
 
-					element.removeAttribute(attrName); // Necessário para evitar novas novas execuções a partir de outras instâncias de html``
+					element.removeAttribute(attrName); // Necessário para evitar novas execuções a partir de outras instâncias de html()
 				}
 
 				// @show
@@ -143,7 +143,7 @@ function html(templateString, ...expressions) {
 					let show = typeof expression == 'function' ? expression() : attr.value == 'true';
 
 					element.classList[show ? 'remove' : 'add']('hidden');
-					element.removeAttribute(attrName); // Necessário para evitar novas novas execuções a partir de outras instâncias de html``
+					element.removeAttribute(attrName); // Necessário para evitar novas execuções a partir de outras instâncias de html()
 				}
 			});
 		}
