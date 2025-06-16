@@ -209,28 +209,15 @@ function createUI(srvConfig) {
 
 	const $toolbarActionsRight = Buttons(_toolbarActionsRight);
 
-	// const $tabs = html`
-	// 	<div class="tabs flex gap-2">${() =>
-	// 		srvConfig.data.tables.filter(x => x.enabled).map(table => {
-	// 			const $tab = html`
-	// 				<button type="button" class="tab button h-10 px-3 whitespace-nowrap" id="${table.id}" @onClick="${() => showTable(table)}">
-	// 					<span>${table.name}</span>
-	// 				</button>
-	// 			`
-
-	// 			console.log($tab);
-
-	// 			return $tab;
-	// 		})
-	// 	}</div>
-	// `;
 	const $tabs = html`
 		<div class="tabs flex gap-2">${() =>
-		[]
+			srvConfig.data.tables.filter(x => x.enabled).map(table => html`
+				<button type="button" class="tab button h-10 px-3 whitespace-nowrap" id="${table.id}" @onClick="${() => showTable(table)}">
+					<span>${table.name}</span>
+				</button>
+			`)
 		}</div>
 	`;
-
-	console.log($tabs);
 
 	const $buttonAddTable = html`
 		<button type="button" class="button add-sheet min-w-10 h-10" title="Adicionar planilha" @onClick="${async e => {
@@ -307,7 +294,7 @@ function createUI(srvConfig) {
 
 					<!-- toolbar-table -->
 					<div class="toolbar-table flex gap-2 px-4 pb-4">
-						<div class="flex gap-2 w-max-[600px] overflow-x-auto">${$tabs}</div>
+						<div class="flex gap-2 w-max-[600px] overflow-x-auto" @show="${_appState.opened}">${$tabs}</div>
 						${_appState.opened ? $buttonAddTable : ''}
 						${$toolbarTable}
 					</div>

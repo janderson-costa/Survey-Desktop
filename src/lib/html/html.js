@@ -133,7 +133,7 @@ function html(templateString, ...expressions) {
 				if (attrName == '@show') {
 					let show = typeof expression == 'function' ? expression() : attr.value == 'true';
 
-					element.classList[show ? 'remove' : 'add']('hidden');
+					element.classList[show ? 'remove' : 'add']('html-hidden');
 					element.removeAttribute(attrName); // Necessário para evitar novas execuções a partir de outras instâncias de html()
 				}
 			});
@@ -220,7 +220,11 @@ function _setHtmlStyle() {
 
 	document.querySelector('head').appendChild(html`
 		<style id="html-style">
-			.disabled {
+			.html-hidden {
+				display: none;
+			}
+
+			.html-disabled {
 				opacity: .6;
 				-webkit-user-select: none;
 				-moz-user-select: none;
