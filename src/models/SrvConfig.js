@@ -7,7 +7,7 @@ function SrvConfig() {
 			mobile: null,
 		},
 		data: {
-			tables: [SrvTable()]
+			tables: [] // SrvTable[]
 		},
 		info: SrvInfo(),
 	};
@@ -17,8 +17,9 @@ function SrvConfig() {
 
 function SrvTable() {
 	const table = {
+		id: '', // Válido somente enquanto o arquivo do Excel estiver aberto
 		name: '',
-		disabled: false,
+		enabled: true,
 		rows: [SrvTableRow()],
 	};
 

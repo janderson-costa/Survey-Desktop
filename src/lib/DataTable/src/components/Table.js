@@ -6,7 +6,7 @@ import { Footer } from './Footer.js';
 export function Table(options) {
 	const _table = {
 		options,
-		id: options.id ? 'dt-' + options.id : utils.generateGuid(),
+		id: options.id || utils.generateGuid(),
 		element: null,
 		elements: {
 			scrollable: null,

@@ -90,6 +90,9 @@ function html(templateString, ...expressions) {
 			const result = typeof expression == 'function' ? expression() : expression;
 			const results = result instanceof Array ? result : [result]; // Element | Value
 
+			if (!results.length)
+				results.push('');
+
 			results.forEach((result, index) => {
 				element.before(result);
 

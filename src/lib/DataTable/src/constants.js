@@ -1,4 +1,5 @@
 export class TableOptions {
+	id = null; // string
 	data = []; /* [
 		{ fieldName1: value, fieldName2: value },
 		{ fieldName2: value, fieldName2: value },

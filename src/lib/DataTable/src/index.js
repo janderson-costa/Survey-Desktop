@@ -16,9 +16,8 @@ export function DataTable(options) {
 	if (options.place)
 		options.place.appendChild(_table.element);
 
-	window.addEventListener('click', onWindowClick);
-	window.addEventListener('keydown', onKeyDown);
-
+	_table.element.addEventListener('click', onWindowClick);
+	_table.element.addEventListener('keydown', onKeyDown);
 	_table.destroy = destroy;
 
 	return _table;
@@ -77,9 +76,8 @@ export function DataTable(options) {
 	}
 
 	function destroy() {
-		window.removeEventListener('click', onWindowClick);
-		window.removeEventListener('keydown', onKeyDown);
-
+		_table.element.removeEventListener('click', onWindowClick);
+		_table.element.removeEventListener('keydown', onKeyDown);
 		_table.element.remove();
 	}
 }

@@ -26,11 +26,14 @@ export default function srvService() {
 
 		let filePath = result.filePaths[0];
 		let ext = filePath.substring(filePath.lastIndexOf('.'));
+		let tempFileName = 'temp' + ext;
 
-		// Copia p arquivo da planilha paã pasta temp
+		await shared.appData({ key: 'tempFileName', value: tempFileName });
+
+		// Copia p arquivo da planilha para pasta temp
 		result = await shared.actions.copyFile({
 			fromFilePath: filePath,
-			toFilePath: './temp/temp' + ext,
+			toFilePath: './temp/' + tempFileName,
 		});
 
 		if (result.error) {
@@ -38,18 +41,18 @@ export default function srvService() {
 			return;
 		}
 
-		// Cria o arquivo config.json
-		const srvConfig = SrvConfig();
+		// // Cria o arquivo config.json
+		// const srvConfig = SrvConfig();
 
-		result = await shared.actions.writeFile({
-			filePath: './temp/config.json',
-			data: JSON.stringify(srvConfig),
-		});
+		// result = await shared.actions.writeFile({
+		// 	filePath: './temp/config.json',
+		// 	data: JSON.stringify(srvConfig),
+		// });
 
-		if (result.error) {
-			toast.show();
-			return;
-		}
+		// if (result.error) {
+		// 	toast.show();
+		// 	return;
+		// }
 
 		// Abre temp.xls(x) no Excel
 		result = await shared.actions.openFile({
@@ -61,6 +64,8 @@ export default function srvService() {
 			return;
 		}
 
+		shared.actions.window({ action: 'minimize' });
+
 		return new Promise(resolve => {
 			// Aguarda o Excel abrir
 			const interval = setInterval(async () => {
@@ -68,7 +73,34 @@ export default function srvService() {
 
 				if (sheets.length) {
 					clearInterval(interval);
-					srvConfig.data.tables[0].name = sheets[0];
+
+					// Cria o arquivo config.json
+					const srvConfig = SrvConfig();
+
+					sheets.forEach((sheet, index) => {
+						const table = SrvTable();
+
+						table.id = sheet.Id; // ! Obs.: Id válido somente enquanto o arquivo do Excel estiver aberto
+						table.name = sheet.Name;
+						table.enabled = index == 0; // Habilita a primeira
+
+						srvConfig.data.tables.push(table);
+					});
+
+					// Escreve o arquivo config.json
+					result = await shared.actions.writeFile({
+						filePath: './temp/config.json',
+						data: JSON.stringify(srvConfig),
+					});
+
+					if (result.error) {
+						toast.show();
+						return;
+					}
+
+					// Ativa a janela da aplicação
+					await shared.actions.window({ action: 'focus' });
+
 					resolve(srvConfig);
 				}
 			}, 500);
@@ -122,6 +154,8 @@ export default function srvService() {
 			});
 		}
 
+		shared.appData({ key: 'tempFileName', value: tempFileName });
+
 		// Lê o arquivo config.json ou antigos: formdata.json, report.json e options.json
 		const config = await shared.actions.readFile({ filePath: './temp/config.json' });
 
@@ -159,17 +193,33 @@ export default function srvService() {
 			return;
 		}
 
-		// Ativa a janela da aplicação
-		//shared.actions.window({ action: 'minimize' });
-		// setTimeout(() => {
-		// 	shared.actions.window({ action: 'focus' });
-		// }, 2000);
+		shared.actions.window({ action: 'minimize' });
 
-		return srvConfig;
+		return new Promise(resolve => {
+			// Aguarda o Excel abrir
+			const interval = setInterval(async () => {
+				const sheets = await getSheets(false);
+
+				if (sheets.length) {
+					clearInterval(interval);
+
+					// Atualizar o id da tabela
+					// ! Obs.: Id válido somente enquanto o arquivo do Excel estiver aberto
+					srvConfig.data.tables.forEach((table, index) => table.id = sheets[index].Id);
+
+					// Ativa a janela da aplicação
+					await shared.actions.window({ action: 'focus' });
+
+					resolve(srvConfig);
+				}
+			}, 500);
+		});
 	}
 
 	async function saveFile(srvConfig) {
 		//const toast = Toast({ message: 'Não foi possível salvar.' });
+
+		const tempFileName = await shared.appData({ key: 'tempFileName' });
 
 		// Atualiza o arquivo config.json
 		let result = await shared.actions.writeFile({
@@ -180,7 +230,7 @@ export default function srvService() {
 		// Salva a planilha temp
 		result = shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=SaveWorkbook'],// ! <<<<<<<<<<
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=SaveWorkbook'],
 		}).then(result => {
 			console.log(result);
 		});
@@ -194,12 +244,14 @@ export default function srvService() {
 		});
 	}
 
-	function getSheets(notify = true) {
+	async function getSheets(notify = true) {
 		// Retorna os nomes das planilhas disponíveis no arquivo do Excel.
+
+		const tempFileName = await shared.appData({ key: 'tempFileName' });
 
 		return shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
-			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}`, 'method=GetSheets'],// ! <<<<<<<<<<
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=GetSheets'],
 		}).then(result => {
 			if (result.data.stdout) {
 				return JSON.parse(result.data.stdout);

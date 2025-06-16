@@ -44,7 +44,7 @@ window.actions = {
 
 init();
 
-async function init() {
+async function init(options = { new: false }) {
 	window.__constants = await shared.constants();
 	_appState = await shared.appData({ key: 'state' }) || _appState;
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
@@ -81,7 +81,8 @@ async function init() {
 // ACÕES
 
 async function newFile() {
-	if (!_appState.saved) {
+	// Salva o arquivo atual
+	if (_appState.opened && !_appState.saved) {
 		saveFile(!_appState.saved, newFile);
 		return;
 	}
@@ -93,11 +94,12 @@ async function newFile() {
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
-	init();
+	init({ new: true });
 }
 
 async function openFile() {
-	if (!_appState.saved) {
+	// Salva o arquivo atual
+	if (_appState.opened && !_appState.saved) {
 		saveFile(!_appState.saved, newFile);
 		return;
 	}
@@ -172,10 +174,7 @@ function setWindowTitle() {
 }
 
 function createUI(srvConfig) {
-	const _menu = Menu({
-		items: [],
-		align: 'bottom left',
-	});
+	const _menu = Menu({ items: [] });
 
 	const _toolbarActionsLeft = [
 		{ title: 'Novo', icon: Icon('new'), onClick: () => newFile() },
@@ -210,15 +209,28 @@ function createUI(srvConfig) {
 
 	const $toolbarActionsRight = Buttons(_toolbarActionsRight);
 
+	// const $tabs = html`
+	// 	<div class="tabs flex gap-2">${() =>
+	// 		srvConfig.data.tables.filter(x => x.enabled).map(table => {
+	// 			const $tab = html`
+	// 				<button type="button" class="tab button h-10 px-3 whitespace-nowrap" id="${table.id}" @onClick="${() => showTable(table)}">
+	// 					<span>${table.name}</span>
+	// 				</button>
+	// 			`
+
+	// 			console.log($tab);
+
+	// 			return $tab;
+	// 		})
+	// 	}</div>
+	// `;
 	const $tabs = html`
-		<div class="tabs flex gap-2" @show="${!!srvConfig.data.tables.length}">${() =>
-			srvConfig.data.tables.map((table, index) => html`
-				<button type="button" class="tab button items-start h-10 px-3 !gap-3 whitespace-nowrap" @onClick="${() => showTable(index)}">
-					<span>${table.name}</span>
-				</button>
-			`)
+		<div class="tabs flex gap-2">${() =>
+		[]
 		}</div>
 	`;
+
+	console.log($tabs);
 
 	const $buttonAddTable = html`
 		<button type="button" class="button add-sheet min-w-10 h-10" title="Adicionar planilha" @onClick="${async e => {
@@ -227,18 +239,18 @@ function createUI(srvConfig) {
 			const sheets = await srvService().getSheets();
 
 			if (sheets.length) {
-				_menu.options.items = sheets.map(name => {
+				_menu.options.items = sheets.map(sheet => {
 					let $icon = '';
 
-					if (srvConfig.data.tables.find(x => x.name == name)) {
+					if (srvConfig.data.tables.find(x => x.name == sheet.Name)) {
 						$icon = Icon('check');
 					}
 
-					return ({ icon: $icon, name: name, onClick: () => addTable(name) });
+					return ({ icon: $icon, name: sheet.Name, onClick: () => addTable(sheet) });
 				});
 				_menu.show({
 					trigger: e.element.closest('button'),
-					position: 'top',
+					position: 'bottom left',
 				});
 
 				lucide.createIcons();
@@ -262,7 +274,7 @@ function createUI(srvConfig) {
 	}}</div>`;
 
 	const $tables = srvConfig.data.tables.map(table => {
-		const dt = createDataTable();
+		const dt = createDataTable(table);
 
 		_dataTables.push(dt);
 
@@ -290,13 +302,13 @@ function createUI(srvConfig) {
 					<!-- toolbar-actions -->
 					<div class="toolbar-actions flex justify-between gap-4 px-4 py-4">
 						<div class="left">${$toolbarActionsLeft}</div>
-						<div class="right">${_appState.opened ? $toolbarActionsRight : ''}</div>
+						<div class="right" @show="${_appState.opened}">${$toolbarActionsRight}</div>
 					</div>
 
 					<!-- toolbar-table -->
-					<div class="toolbar-actions flex gap-2 px-4 pb-4">
-						${_appState.opened ? $buttonAddTable : ''}
+					<div class="toolbar-table flex gap-2 px-4 pb-4">
 						<div class="flex gap-2 w-max-[600px] overflow-x-auto">${$tabs}</div>
+						${_appState.opened ? $buttonAddTable : ''}
 						${$toolbarTable}
 					</div>
 				</div>
@@ -327,8 +339,9 @@ function createUI(srvConfig) {
 
 // DATATABLES
 
-function createDataTable() {
+function createDataTable(table) {
 	return DataTable({
+		id: table.id,
 		data: [],
 		place: null,
 		checkbox: false,
@@ -503,34 +516,35 @@ function createDataTable() {
 }
 
 function loadTables(srvConfig) {
-	srvConfig.data.tables.forEach((table, index) => {
+	srvConfig.data.tables.filter(x => x.enabled).forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
 }
 
-function showTable(index = 0) {
-	_activeDataTable = _dataTables[index];
+function showTable(table) {
+	table = table || _srvConfig.data.tables[0];
+	_activeDataTable = _dataTables.find(dt => dt.id == table.id);
 
-	if (!_srvConfig.data.tables[index].name) {
-		_ui.tables.classList.add('!hidden');
-		_ui.toolbarTable.classList.add('!hidden');
-		return;
-	}
+	// if (!_srvConfig.data.tables[index].name) {
+	// 	_ui.tables.classList.add('!hidden');
+	// 	_ui.toolbarTable.classList.add('!hidden');
+	// 	return;
+	// }
 
 	// Tab ativa
-	_ui.tabs.querySelectorAll('.tab').forEach((x, _index)=> {
-		x.classList.remove('active');
+	_ui.tabs.querySelectorAll('.tab').forEach(($tab, _index)=> {
+		$tab.classList.remove('active');
 
-		if (index == _index)
-			x.classList.add('active');
+		if ($tab.id == table.id)
+			$tab.classList.add('active');
 	});
 	
 	// Exibe a tabela especificada
-	document.querySelectorAll('.dt').forEach((x, _index)=> {
-		x.classList.add('!hidden');
+	document.querySelectorAll('.dt').forEach(($dt, _index)=> {
+		$dt.classList.add('!hidden');
 
-		if (index == _index)
-			x.classList.remove('!hidden');
+		if ($dt.id == table.id)
+			$dt.classList.remove('!hidden');
 	});
 
 	// Recarrega a barra de botões da tabela
@@ -541,8 +555,8 @@ function showTable(index = 0) {
 	_ui.itemsTotal.reload();
 }
 
-function addTable(name) {
-	const table = _srvConfig.data.tables.find(x => x.name == name);
+function addTable(sheet) {
+	const table = _srvConfig.data.tables.find(x => x.name == sheet.Name);
 
 	// if (!table) return;
 
@@ -554,4 +568,8 @@ function addTable(name) {
 
 	// _tables.push(dt);
 	// showTable(_tables.length - 1);
+}
+
+async function observeSheets() {
+	// Observa as planilhas disponíveis no arquivo do Excel.
 }
