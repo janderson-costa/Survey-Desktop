@@ -489,11 +489,11 @@ function createDataTable() {
 		},
 		onSelectRows: ({ rows }) => {
 			_ui.toolbarTable.reload();
-			//lucide.createIcons();
+			lucide.createIcons();
 		},
 		onUnselectRows: () => {
 			_ui.toolbarTable.reload();
-			//lucide.createIcons();
+			lucide.createIcons();
 		},
 		onClickOut: ({ event }) => {
 			// Cancela a chamada de onUnselectRows()
@@ -533,9 +533,9 @@ function showTable(index = 0) {
 			x.classList.remove('!hidden');
 	});
 
-	// Recarrega a barra de botões de ação
-	// _ui.toolbarActionsLeft.reload();
-	// lucide.createIcons();
+	// Recarrega a barra de botões da tabela
+	_ui.toolbarTable.reload();
+	lucide.createIcons();
 
 	// Total
 	_ui.itemsTotal.reload();
