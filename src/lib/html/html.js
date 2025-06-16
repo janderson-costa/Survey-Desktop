@@ -1,16 +1,12 @@
 // Criado por Janderson Costa em 05/2025.
 
-const onHtml = {
-	Reload: null,
-};
-
-export { html, css, onHtml };
+export { html };
 
 _setHtmlStyle();
 
 function html(templateString, ...expressions) {
-	const _templateString = templateString;
-	const _expressions = expressions;
+	const TEMPLATESTRING = templateString;
+	const EXPRESSIONS = expressions;
 	let _component = createComponent();
 	let _xPath;
 
@@ -26,9 +22,6 @@ function html(templateString, ...expressions) {
 
 		focus();
 
-		if (onHtml.Reload)
-			onHtml.Reload({ component: newComponent });
-
 		return newComponent;
 	}
 
@@ -42,7 +35,7 @@ function html(templateString, ...expressions) {
 	}
 
 	function parseTemplateString() {
-		const htmlParts = _templateString;
+		const htmlParts = TEMPLATESTRING;
 		const html = htmlParts.reduce((acc, cur, i) => {
 			acc = _compressTemplateString(acc);
 			cur = _compressTemplateString(cur);
@@ -54,7 +47,7 @@ function html(templateString, ...expressions) {
 			const part = _compressTemplateString(htmlParts[index]);
 			const eventRegex = /@[a-zA-Z0-9]*="$/; // Termina com @<eventName>=" - Ex.: @onClick=", @onChange=", @show="
 
-			let expression = _expressions[index];
+			let expression = EXPRESSIONS[index];
 			let isFunction = typeof expression == 'function';
 
 			if (_isElement(expression)) {
@@ -93,7 +86,7 @@ function html(templateString, ...expressions) {
 
 		elements.forEach(element => {
 			const index = element.textContent;
-			const expression = _expressions[index];
+			const expression = EXPRESSIONS[index];
 			const result = typeof expression == 'function' ? expression() : expression;
 			const results = result instanceof Array ? result : [result]; // Element | Value
 
@@ -119,7 +112,7 @@ function html(templateString, ...expressions) {
 
 			Array.from(element.attributes).forEach(attr => {
 				const attrName = attr.name.toLowerCase();
-				const expression = _expressions[attr.value];
+				const expression = EXPRESSIONS[attr.value];
 
 				// @onEvent
 				if (attrName.startsWith('@on')) {
@@ -147,9 +140,6 @@ function html(templateString, ...expressions) {
 	function setPublicProperties(element) {
 		if (!element.reload)
 			element.reload = reload;
-
-		if (!element.css)
-			element.css = style => css(element, style);
 	}
 
 	function focus() {
@@ -216,64 +206,6 @@ function html(templateString, ...expressions) {
 
 		return `/${parts.join('/')}`;
 	}
-}
-
-function css(element, style = {}) {
-	const pxProps = new Set([
-		'borderBottomLeftRadius',
-		'borderBottomRightRadius',
-		'borderBottomWidth',
-		'borderLeftWidth',
-		'borderRadius',
-		'borderRightWidth',
-		'borderTopLeftRadius',
-		'borderTopRightRadius',
-		'borderTopWidth',
-		'borderWidth',
-		'bottom',
-		'columnGap',
-		'fontSize',
-		'gap',
-		'height',
-		'left',
-		'letterSpacing',
-		'lineHeight',
-		'margin',
-		'marginBottom',
-		'marginLeft',
-		'marginRight',
-		'marginTop',
-		'maxHeight',
-		'maxWidth',
-		'minHeight',
-		'minWidth',
-		'outlineWidth',
-		'padding',
-		'paddingBottom',
-		'paddingLeft',
-		'paddingRight',
-		'paddingTop',
-		'right',
-		'rowGap',
-		'top',
-		'translateX',
-		'translateY',
-		'translateZ',
-		'width',
-	]);
-
-	const processedStyle = {};
-
-	for (const [prop, value] of Object.entries(style)) {
-		// Se o valor for um número, adiciona 'px' no final
-		if (pxProps.has(prop) && typeof value == 'number') {
-			processedStyle[prop] = `${value}px`;
-		} else {
-			processedStyle[prop] = value;
-		}
-	}
-
-	Object.assign(element.style, processedStyle);
 }
 
 

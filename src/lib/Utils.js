@@ -2,6 +2,7 @@ export function Utils() {
 	return {
 		form,
 		observe,
+		css,
 	};
 
 	function form() {
@@ -59,5 +60,63 @@ export function Utils() {
 				return success;
 			}
 		});
+	}
+
+	function css(element, style = {}) {
+		const pxProps = new Set([
+			'borderBottomLeftRadius',
+			'borderBottomRightRadius',
+			'borderBottomWidth',
+			'borderLeftWidth',
+			'borderRadius',
+			'borderRightWidth',
+			'borderTopLeftRadius',
+			'borderTopRightRadius',
+			'borderTopWidth',
+			'borderWidth',
+			'bottom',
+			'columnGap',
+			'fontSize',
+			'gap',
+			'height',
+			'left',
+			'letterSpacing',
+			'lineHeight',
+			'margin',
+			'marginBottom',
+			'marginLeft',
+			'marginRight',
+			'marginTop',
+			'maxHeight',
+			'maxWidth',
+			'minHeight',
+			'minWidth',
+			'outlineWidth',
+			'padding',
+			'paddingBottom',
+			'paddingLeft',
+			'paddingRight',
+			'paddingTop',
+			'right',
+			'rowGap',
+			'top',
+			'translateX',
+			'translateY',
+			'translateZ',
+			'width',
+		]);
+
+		const processedStyle = {};
+
+		for (const [prop, value] of Object.entries(style)) {
+			// Se o valor for um número, adiciona 'px' no final
+			if (pxProps.has(prop) && typeof value == 'number') {
+				processedStyle[prop] = `${value}px`;
+			} else {
+				processedStyle[prop] = value;
+			}
+		}
+
+		Object.assign(element.style, processedStyle);
 	}
 }

@@ -248,10 +248,15 @@ function createUI(srvConfig) {
 	`;
 
 	const $toolbarTable = html`<div>${() => {
-		// _toolbarTable.forEach((control, index) => {
-		// 	if (_activeDataTable && !_activeDataTable.rows.some(x => x.isSelected) && index > 1)
-		// 		control.hidden = true;
-		// });
+		_toolbarTable.forEach((control, index) => {
+			if (index > 2) {
+				control.hidden = true;
+
+				if (_activeDataTable && _activeDataTable.rows.some(x => x.isSelected)) {
+					control.hidden = false;
+				}
+			}
+		});
 
 		return Buttons(_toolbarTable);
 	}}</div>`;
@@ -484,11 +489,11 @@ function createDataTable() {
 		},
 		onSelectRows: ({ rows }) => {
 			_ui.toolbarTable.reload();
-			lucide.createIcons();
+			//lucide.createIcons();
 		},
 		onUnselectRows: () => {
 			_ui.toolbarTable.reload();
-			lucide.createIcons();
+			//lucide.createIcons();
 		},
 		onClickOut: ({ event }) => {
 			// Cancela a chamada de onUnselectRows()

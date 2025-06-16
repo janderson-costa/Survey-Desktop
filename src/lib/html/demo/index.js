@@ -1,4 +1,4 @@
-import { html, css, onHtml } from '../html.js';
+import { html } from '../html.js';
 
 const list = ['Item 1', 'Item 2', 'Item 3'];
 const items = [
@@ -124,15 +124,8 @@ const comp1 = html`
 	</div>
 `;
 
-// CSS - Exemplo de uso (Obs.: as propriedades são redefinidas no reload())
-comp1.querySelectorAll('button')[3].css({ color: 'red' }); // Para elementos gerados pela lib
-select.css({ color: 'blue' });
-css(comp1.querySelector('h1'), { color: 'blue' }); // Para qualquer elemento
-
 document.body.appendChild(comp1);
 console.log(comp1);
-
-onHtml.Reload = onHtmlReload;
 
 function onHtmlReload(result) {
 	console.log('onHtmlReload', result);
