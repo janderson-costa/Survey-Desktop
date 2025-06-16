@@ -9,8 +9,8 @@ export { html, css, onHtml };
 _setHtmlStyle();
 
 function html(templateString, ...expressions) {
-	let _templateString = templateString;
-	let _expressions = expressions;
+	const _templateString = templateString;
+	const _expressions = expressions;
 	let _component = createComponent();
 	let _xPath;
 
@@ -44,14 +44,14 @@ function html(templateString, ...expressions) {
 	function parseTemplateString() {
 		const htmlParts = _templateString;
 		const html = htmlParts.reduce((acc, cur, i) => {
-			acc = compressTemplateString(acc);
-			cur = compressTemplateString(cur);
+			acc = _compressTemplateString(acc);
+			cur = _compressTemplateString(cur);
 
 			if (i == 0)
 				return cur;
 
 			const index = i - 1;
-			const part = compressTemplateString(htmlParts[index]);
+			const part = _compressTemplateString(htmlParts[index]);
 			const eventRegex = /@[a-zA-Z0-9]*="$/; // Termina com @<eventName>=" - Ex.: @onClick=", @onChange=", @show="
 
 			let expression = _expressions[index];
@@ -76,10 +76,6 @@ function html(templateString, ...expressions) {
 		}, '');
 
 		return html;
-
-		function compressTemplateString(text) {
-			return typeof text == 'string' ? text.replace(/\n|\t/g, '') : '';
-		}
 	}
 
 	function createElement(html) {
@@ -99,13 +95,12 @@ function html(templateString, ...expressions) {
 			const index = element.textContent;
 			const expression = _expressions[index];
 			const result = typeof expression == 'function' ? expression() : expression;
-			const nodes = result instanceof Array ? result : [result];
+			const results = result instanceof Array ? result : [result]; // Element | Value
 
-			nodes.forEach((node, index) => {
-				if (node instanceof Element)
-					element.before(node);
+			results.forEach((result, index) => {
+				element.before(result);
 
-				if (index == nodes.length - 1)
+				if (index == results.length - 1)
 					element.remove();
 			});
 		});
@@ -176,6 +171,10 @@ function html(templateString, ...expressions) {
 
 	function _isElement(any) {
 		return any instanceof Element || any[0] instanceof Element;
+	}
+
+	function _compressTemplateString(text) {
+		return typeof text == 'string' ? text.replace(/\n|\t/g, '') : ''; // Não usar trim()
 	}
 
 	function _getElementByXPath(xPath) {

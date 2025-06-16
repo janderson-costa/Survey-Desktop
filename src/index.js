@@ -71,8 +71,8 @@ async function init() {
 	// Carrega a página
 	document.body.innerHTML = '';
 	document.body.appendChild(_ui.layout);
-	showTable();
 	loadTables(srvConfig);
+	showTable();
 	lucide.createIcons();
 	_temp = null;
 }
@@ -247,6 +247,23 @@ function createUI(srvConfig) {
 		}}">${Icon('add')}</button>
 	`;
 
+	const $toolbarTable = html`<div>${() => {
+		// _toolbarTable.forEach((control, index) => {
+		// 	if (_activeDataTable && !_activeDataTable.rows.some(x => x.isSelected) && index > 1)
+		// 		control.hidden = true;
+		// });
+
+		return Buttons(_toolbarTable);
+	}}</div>`;
+
+	const $tables = srvConfig.data.tables.map(table => {
+		const dt = createDataTable();
+
+		_dataTables.push(dt);
+
+		return dt.element;
+	});
+
 	const $itemsTotal = html`<span class="flex items-center h-10">${() => {
 		let total;
 
@@ -260,23 +277,6 @@ function createUI(srvConfig) {
 
 		return total ? `${total} item(s)` : '';
 	}}</span>`;
-
-	const $toolbarTable = html`<div>${() => {
-		// _toolbarTable.forEach(control => {
-		// 	if (!_activeDataTable || !_activeDataTable.rows.some(x => x.isSelected) && index > 1)
-		// 		control.hidden = true;
-		// });
-
-		return Buttons(_toolbarTable);
-	}}</div>`;
-
-	const $tables = srvConfig.data.tables.map(table => {
-		const $dt = createDataTable();
-
-		_dataTables.push($dt);
-
-		return $dt.element;
-	});
 
 	const $layout = html`
 		<div class="layout flex h-screen">
@@ -501,9 +501,6 @@ function loadTables(srvConfig) {
 	srvConfig.data.tables.forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
-
-	// Total
-	_ui.itemsTotal.reload();
 }
 
 function showTable(index = 0) {
