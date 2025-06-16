@@ -41,19 +41,6 @@ export default function srvService() {
 			return;
 		}
 
-		// // Cria o arquivo config.json
-		// const srvConfig = SrvConfig();
-
-		// result = await shared.actions.writeFile({
-		// 	filePath: './temp/config.json',
-		// 	data: JSON.stringify(srvConfig),
-		// });
-
-		// if (result.error) {
-		// 	toast.show();
-		// 	return;
-		// }
-
 		// Abre temp.xls(x) no Excel
 		result = await shared.actions.openFile({
 			filePath: './temp/temp' + ext,
@@ -203,9 +190,28 @@ export default function srvService() {
 				if (sheets.length) {
 					clearInterval(interval);
 
-					// Atualizar o id da tabela
-					// ! Obs.: Id válido somente enquanto o arquivo do Excel estiver aberto
-					srvConfig.data.tables.forEach((table, index) => table.id = sheets[index].Id);
+					sheets.forEach(sheet => {
+						let isNewTable = true;
+
+						// Atualizar o id da tabela
+						srvConfig.data.tables.forEach(table => {
+							if (sheet.Name == table.name) {
+								table.id = sheet.Id; // ! Obs.: Id válido somente enquanto o arquivo do Excel estiver aberto
+								isNewTable = false;
+							}
+						});
+
+						// Para arquivos .srv de versões anteriores, adiciona o restante das planilhas como desabilitadas
+						if (isNewTable) {
+							const table = SrvTable();
+
+							table.id = sheet.Id;
+							table.name = sheet.Name;
+							table.enabled = false;
+
+							srvConfig.data.tables.push(table);
+						}
+					});
 
 					// Ativa a janela da aplicação
 					await shared.actions.window({ action: 'focus' });
@@ -233,6 +239,8 @@ export default function srvService() {
 			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=SaveWorkbook'],
 		}).then(result => {
 			console.log(result);
+		}).catch(error => {
+			console.log(error);
 		});
 
 		// Empacota o arquivo .srv
@@ -259,6 +267,9 @@ export default function srvService() {
 				Toast({ message: `Falha ao acessar as planilhas.` }).show();
 			}
 
+			return [];
+		}).catch(error => {
+			Toast({ message: `Falha ao acessar as planilhas.` }).show();
 			return [];
 		});
 	}

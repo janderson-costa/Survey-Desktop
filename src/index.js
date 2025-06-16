@@ -31,6 +31,7 @@ let _ui = {
 };
 let _appState = AppState();
 let _srvConfig = SrvConfig();
+let _sheets = [];
 let _dataTables = [];
 let _activeDataTable;
 let _temp;
@@ -44,7 +45,7 @@ window.actions = {
 
 init();
 
-async function init(options = { new: false }) {
+async function init() {
 	window.__constants = await shared.constants();
 	_appState = await shared.appData({ key: 'state' }) || _appState;
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
@@ -66,13 +67,14 @@ async function init(options = { new: false }) {
 	});
 
 	// Cria a interface do usuário
+	_sheets = await srvService().getSheets();
 	_ui = createUI(srvConfig);
 
 	// Carrega a página
 	document.body.innerHTML = '';
 	document.body.appendChild(_ui.layout);
 	loadTables(srvConfig);
-	showTable();
+	selectTable();
 	lucide.createIcons();
 	_temp = null;
 }
@@ -94,7 +96,7 @@ async function newFile() {
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
-	init({ new: true });
+	init();
 }
 
 async function openFile() {
@@ -211,11 +213,22 @@ function createUI(srvConfig) {
 
 	const $tabs = html`
 		<div class="tabs flex gap-2">${() =>
-			srvConfig.data.tables.filter(x => x.enabled).map(table => html`
-				<button type="button" class="tab button h-10 px-3 whitespace-nowrap" id="${table.id}" @onClick="${() => showTable(table)}">
-					<span>${table.name}</span>
-				</button>
-			`)
+			srvConfig.data.tables.filter(x => x.enabled).map((table, index) => {
+				const $tab = html`
+					<button type="button" class="tab button h-10 px-3 whitespace-nowrap" id="${table.id}" @onClick="${() => selectTable(table)}">
+						<span>${table.name}</span>
+					</button>
+				`;
+
+				if (_activeDataTable) {
+					if (_activeDataTable.id == table.id)
+						$tab.classList.add('active');
+				} else if (index == 0) {
+					$tab.classList.add('active');
+				}
+
+				return $tab;
+			})
 		}</div>
 	`;
 
@@ -223,26 +236,25 @@ function createUI(srvConfig) {
 		<button type="button" class="button add-sheet min-w-10 h-10" title="Adicionar planilha" @onClick="${async e => {
 			e.event.stopPropagation();
 
-			const sheets = await srvService().getSheets();
+			if (!_sheets.length) return;
 
-			if (sheets.length) {
-				_menu.options.items = sheets.map(sheet => {
-					let $icon = '';
+			_menu.options.items = _sheets.map((sheet, index) => {
+				let table = srvConfig.data.tables.find(x => x.id == sheet.Id);
 
-					if (srvConfig.data.tables.find(x => x.name == sheet.Name)) {
-						$icon = Icon('check');
-					}
+				if (table) {
+					return ({
+						icon: table.enabled ? Icon('check') : '',
+						name: sheet.Name,
+						onClick: () => addTable(table, index),
+					});
+				}
+			});
+			_menu.show({
+				trigger: e.element.closest('button'),
+				position: 'bottom left',
+			});
 
-					return ({ icon: $icon, name: sheet.Name, onClick: () => addTable(sheet) });
-				});
-				_menu.show({
-					trigger: e.element.closest('button'),
-					position: 'bottom left',
-				});
-
-				lucide.createIcons();
-			}
-
+			lucide.createIcons();
 		}}">${Icon('add')}</button>
 	`;
 
@@ -293,9 +305,9 @@ function createUI(srvConfig) {
 					</div>
 
 					<!-- toolbar-table -->
-					<div class="toolbar-table flex gap-2 px-4 pb-4">
-						<div class="flex gap-2 w-max-[600px] overflow-x-auto" @show="${_appState.opened}">${$tabs}</div>
-						${_appState.opened ? $buttonAddTable : ''}
+					<div class="toolbar-table flex gap-2 px-4 pb-4" @show="${_appState.opened}">
+						<div class="flex gap-2 w-max-[600px] overflow-x-auto">${$tabs}</div>
+						${$buttonAddTable}
 						${$toolbarTable}
 					</div>
 				</div>
@@ -312,7 +324,7 @@ function createUI(srvConfig) {
 		</div>
 	`;
 
-	return {
+	_ui = {
 		layout: $layout,
 		toolbarActionsLeft: $toolbarActionsLeft,
 		toolbarActionsRight: $toolbarActionsRight,
@@ -321,6 +333,8 @@ function createUI(srvConfig) {
 		tabs: $tabs,
 		tables: $layout.querySelector('.tables'),
 	};
+
+	return _ui;
 }
 
 
@@ -488,11 +502,11 @@ function createDataTable(table) {
 			},
 		},
 		onSelectRows: ({ rows }) => {
-			_ui.toolbarTable.reload();
+			_ui.toolbarTable = _ui.toolbarTable.reload();
 			lucide.createIcons();
 		},
 		onUnselectRows: () => {
-			_ui.toolbarTable.reload();
+			_ui.toolbarTable = _ui.toolbarTable.reload();
 			lucide.createIcons();
 		},
 		onClickOut: ({ event }) => {
@@ -503,58 +517,67 @@ function createDataTable(table) {
 }
 
 function loadTables(srvConfig) {
-	srvConfig.data.tables.filter(x => x.enabled).forEach((table, index) => {
+	srvConfig.data.tables.forEach((table, index) => {
 		_dataTables[index].load(table.rows);
 	});
 }
 
-function showTable(table) {
+function addTable(table, index) {
+	const tablesCount = _srvConfig.data.tables.filter(x => x.enabled).length;
+
+	// Garante que pelo menos uma tabela esteja habilitada
+	if (tablesCount == 1 && table.enabled)
+		return;
+
+	table.enabled = !table.enabled;
+
+	if (table.enabled) {
+		_activeDataTable = _dataTables[index];
+	} else {
+		// Índice do próximo selecionado que está habilitado
+		const tables = _srvConfig.data.tables;
+		let _index = tables.findIndex(x => x.id == _activeDataTable.id);
+
+		if (!tables[_index].enabled) {
+			// Próximo a direita
+			_index = tables.findIndex((x, i) => i > index && x.enabled);
+
+			if (_index == -1) {
+				// Próximo a esquerda
+				_index = tables.reverse().findIndex((x, i) => i < index && x.enabled);
+				tables.reverse();
+			}
+		}
+
+		table = tables[_index];
+		_activeDataTable = _dataTables[_index];
+	}
+
+	_ui.tabs = _ui.tabs.reload();
+	selectTable(table);
+}
+
+function selectTable(table) {
 	table = table || _srvConfig.data.tables[0];
 	_activeDataTable = _dataTables.find(dt => dt.id == table.id);
 
-	// if (!_srvConfig.data.tables[index].name) {
-	// 	_ui.tables.classList.add('!hidden');
-	// 	_ui.toolbarTable.classList.add('!hidden');
-	// 	return;
-	// }
-
 	// Tab ativa
-	_ui.tabs.querySelectorAll('.tab').forEach(($tab, _index)=> {
-		$tab.classList.remove('active');
-
-		if ($tab.id == table.id)
-			$tab.classList.add('active');
-	});
+	_ui.tabs = _ui.tabs.reload();
 	
 	// Exibe a tabela especificada
-	document.querySelectorAll('.dt').forEach(($dt, _index)=> {
-		$dt.classList.add('!hidden');
+	_dataTables.forEach((dt, _index)=> {
+		dt.element.classList.add('!hidden');
 
-		if ($dt.id == table.id)
-			$dt.classList.remove('!hidden');
+		if (dt.id == table.id)
+			dt.element.classList.remove('!hidden');
 	});
 
 	// Recarrega a barra de botões da tabela
-	_ui.toolbarTable.reload();
+	_ui.toolbarTable = _ui.toolbarTable.reload();
 	lucide.createIcons();
 
 	// Total
-	_ui.itemsTotal.reload();
-}
-
-function addTable(sheet) {
-	const table = _srvConfig.data.tables.find(x => x.name == sheet.Name);
-
-	// if (!table) return;
-
-	// const dt = createDataTable();
-
-	// dt.setData(table.data);
-	// dt.element.classList.add('dt');
-	// document.querySelector('.tables').appendChild(dt.element);
-
-	// _tables.push(dt);
-	// showTable(_tables.length - 1);
+	_ui.itemsTotal = _ui.itemsTotal.reload();
 }
 
 async function observeSheets() {
