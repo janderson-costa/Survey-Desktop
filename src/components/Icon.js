@@ -26,6 +26,7 @@ const Icon = (name, options = {}) => {
 		inputText: () => html`<i class="icon" data-lucide="text-cursor-input"></i>`,
 		table: () => html`<i class="icon" data-lucide="table"></i>`,
 		check: () => html`<i class="icon" data-lucide="check"></i>`,
+		gridPlus: () => html`<i class="icon" data-lucide="grid-2x2-plus"></i>`,
 	};
 
 	const $icon = icons[name]();

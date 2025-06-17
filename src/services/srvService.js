@@ -1,5 +1,4 @@
 import { SrvConfig, SrvTable, SrvTableRow, SrvInfo } from '../models/SrvConfig.js';
-import Toast from '../lib/Toast/Toast.js';
 
 export default function srvService() {
 	return {
@@ -7,6 +6,7 @@ export default function srvService() {
 		openFile,
 		getSheets,
 		saveFile,
+		closeWorkbook,
 	};
 
 	async function newFile(options = { minimizeWindow }) {
@@ -277,6 +277,18 @@ export default function srvService() {
 		const result = await shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
 			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=GetSheets'],
+		});
+
+		return result;
+	}
+
+	async function closeWorkbook() {
+		// Fecha o arquivo do Excel.
+
+		const tempFileName = await shared.appData({ key: 'tempFileName' });
+		const result = await shared.actions.execute({
+			executablePath: __constants.EXCEL_API_PATH,
+			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=CloseWorkbook'],
 		});
 
 		return result;

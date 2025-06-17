@@ -89,15 +89,22 @@ async function init() {
 // ACÕES
 
 async function newFile() {
-	Toast({ message: 'Falha ao criar o arquivo.' }).show();
-	return
 	// Salva o arquivo atual
 	if (_appState.opened && !_appState.saved) {
 		saveFile(!_appState.saved, newFile);
 		return;
 	}
 
-	let result = await srvService().newFile({
+	// Fecha o arquivo atual
+	let result = await srvService().closeWorkbook();
+
+	if (result.error) {
+		Toast({ message: `Não foi possível fechar o arquivo temp.xls(x)<br>${result.error}` }).show();
+		return;
+	}
+
+	// Cria o novo arquivo
+	result = await srvService().newFile({
 		minimizeWindow: () => shared.actions.window({ action: 'minimize' }),
 	});
 
@@ -105,7 +112,7 @@ async function newFile() {
 
 	if (result.canceled) return;
 	if (result.error) {
-		Toast({ message: 'Falha ao criar o arquivo.' }).show();
+		Toast({ message: `Falha ao criar o arquivo.<br>${result.error}` }).show();
 		return;
 	}
 
@@ -123,7 +130,16 @@ async function openFile() {
 		return;
 	}
 
-	let result = await srvService().openFile({
+	// Fecha o arquivo atual
+	let result = await srvService().closeWorkbook();
+
+	if (result.error) {
+		Toast({ message: `Não foi possível fechar o arquivo temp.xls(x)<br>${result.error}` }).show();
+		return;
+	}
+
+	// Abre o arquivo
+	result = await srvService().openFile({
 		minimizeWindow: () => shared.actions.window({ action: 'minimize' }),
 	});
 
@@ -131,7 +147,7 @@ async function openFile() {
 
 	if (result.canceled) return;
 	if (result.error) {
-		Toast({ message: 'Falha ao abrir o arquivo.' }).show();
+		Toast({ message: `Falha ao abrir o arquivo.<br>${result.error}` }).show();
 		return;
 	}
 
@@ -166,17 +182,20 @@ async function saveFile(confirm = false, callback) {
 	async function save() {
 		let result = await srvService().saveFile(_srvConfig);
 
-		console.log(result);
+		if (result.error) {
+			Toast({ message: `Falha ao salvar o arquivo: ${result.error}` }).show();
+			return;
+		}
 
-		// _state.saved = true;
-		// await shared.appData({ key: 'state', value: _state });
-		// setWindowTitle();
+		_appState.saved = true;
+		await shared.appData({ key: 'state', value: _appState });
+		setWindowTitle();
 
-		// if (modal)
-		// 	modal.hide();
+		if (modal)
+			modal.hide();
 
-		// if (callback)
-		// 	callback();
+		if (callback)
+			callback();
 	}
 }
 
@@ -281,7 +300,7 @@ function createUI(srvConfig) {
 			});
 
 			lucide.createIcons();
-		}}">${Icon('add')}</button>
+		}}">${Icon('gridPlus')}</button>
 	`;
 
 	const $toolbarTable = html`<div>${() => {
@@ -611,13 +630,35 @@ async function observeSheets() {
 
 	await Utils().pause(1000);
 
-	srvService().getSheets().then(result => {
-		//console.log(result);
+	srvService().getSheets().then(async result => {
+		console.log(result);
 
 		if (result.data) {
 			_sheets = result.data;
 
 			//console.log(_sheets);
+		}
+
+		// Arquivo temp.xls(x) fechado pelo usuário
+		if (_appState.opened && !result.data) {
+			Modal({
+				title: 'Survey',
+				content: 'Mantenha a planilha temp.xls(x) aberta enquanto executa o aplicativo.',
+				buttons: [
+					{ name: 'OK', focused: true, onClick: modal => modal.hide() },
+				]
+			}).show();
+
+			// Abre o arquivo
+			result = await shared.actions.openFile({
+				filePath: __constants.TEMP_FOLDER_PATH + '/' + await shared.appData({ key: 'tempFileName' }),
+			});
+
+			if (result.error) {
+				Toast({ message: `Falha ao abrir o arquivo.<br>${result.error}` }).show();
+			}
+
+			await Utils().pause(3000);
 		}
 
 		observeSheets();

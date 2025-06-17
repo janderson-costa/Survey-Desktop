@@ -22,7 +22,7 @@
 		width: 360,
 		hideOut: true,
 		buttons: [
-			{ name: 'OK', primary: true, onClick: () => {
+			{ name: 'OK', primary: true, focused: true, onClick: modal => {
 				console.log('OK!!');
 				modal.hide();
 			}},

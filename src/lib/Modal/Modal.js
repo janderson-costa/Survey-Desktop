@@ -12,6 +12,7 @@ const defaultOptions = {
 		{
 			name: 'OK',
 			primary: true,
+			focused: true,
 			onClick: function
 		}, 
 		{
@@ -29,15 +30,17 @@ export default function Modal(options) {
 	let $overlay;
 	let $buttons;
 
-	return {
+	const _context = {
 		show,
 		hide,
 		block,
 		showSpin,
 	};
 
+	return _context;
+
 	function create() {
-		const $overlay = document.createElement("div");
+		const $overlay = document.createElement('div');
 
 		$overlay.className = 'modal-overlay';
 		$overlay.innerHTML = /*html*/`
@@ -71,17 +74,20 @@ export default function Modal(options) {
 			$content.innerHTML = options.content;
 
 		// botões
+		options.buttons = options.buttons || [];
 		$buttons = $overlay.querySelector('.modal-buttons');
 
-		(options.buttons || []).forEach(button => {
+		options.buttons.forEach(button => {
 			const $button = document.createElement('button');
 
 			$button.type = 'button';
 			$button.innerHTML = button.name;
 			$button.classList.toggle('primary', !!button.primary);
 
+			button.element = $button;
+
 			if (button.onClick)
-				$button.addEventListener('click', button.onClick);
+				$button.addEventListener('click', () => button.onClick(_context));
 
 			if (button.name.match(/Cancel|No/))
 				$button.addEventListener('click', hide);
@@ -97,11 +103,12 @@ export default function Modal(options) {
 		document.body.appendChild($overlay);
 		$overlay.classList.remove('modal-invisible');
 		$overlay.classList.add('modal-visible');
-
-		if (options.buttons)
-			$buttons.querySelector('button').focus();
-
 		window.addEventListener('keydown', onKeyDown);
+
+		options.buttons.forEach(button => {
+			if (button.focused)
+				button.element.focus();
+		});
 	}
 
 	function hide() {
