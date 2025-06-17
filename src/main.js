@@ -3,7 +3,7 @@
 require('electron-reload')([__dirname], {
 	electron: require(`../node_modules/electron`)
 });
-
+//
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const nodeAPI = require('./api/nodeAPI');
