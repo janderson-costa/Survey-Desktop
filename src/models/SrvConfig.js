@@ -45,13 +45,13 @@ function SrvTableRow() {
 
 function SrvInfo() {
 	const info = {
-		id: '',
-		created: '',
-		author: '',
-		emailAuthor: '',
-		modified: '',
-		modifiedBy: '',
-		emailModifiedBy: '',
+		// id: '',
+		createdAt: '',
+		createdBy: '',
+		createdByEmail: '',
+		// modifiedBy: '',
+		// modifiedAt: '',
+		// modifiedByEmail: '',
 	};
 
 	return info;

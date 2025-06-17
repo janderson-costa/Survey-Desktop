@@ -329,13 +329,13 @@ function parseReport(data) {
 
 	const info = SrvInfo();
 
-	info.id = data.id;
-	info.created = data.created;
-	info.author = data.author;
-	info.emailAuthor = data.mailAuthor;
-	info.modified = data.modified;
-	info.modifiedBy = data.modifiedBy;
-	info.emailModifiedBy = data.mailModifiedBy;
+	// info.id = data.id;
+	info.createdBy = data.author;
+	info.createdByEmail = data.mailAuthor;
+	info.createdAt = data.created;
+	// info.modifiedBy = data.modifiedBy;
+	// info.modifiedByEmail = data.mailModifiedBy;
+	// info.modifiedAt = data.modified;
 
 	return info;
 }
