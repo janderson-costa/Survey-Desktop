@@ -9,24 +9,30 @@ export default function srvService() {
 		saveFile,
 	};
 
-	async function newFile() {
+	async function newFile(options = { minimizeWindow }) {
 		let result = await shared.actions.showOpenDialog({
 			title: 'Novo',
 			filters: [{ name: 'Excel', extensions: ['xlsx', 'xls'] }],
 			properties: ['openFile'],
 		});
 
-		if (result.canceled)
-			return;
+		if (result.canceled) {
+			return result;
+		}
 
-		const toast = Toast({ message: 'Não foi possível criar o template.' });
-
-		// Limpa a pasta temp
-		await shared.actions.clearFolder({ folderPath: './temp' });
+		if (options.minimizeWindow)
+			options.minimizeWindow();
 
 		let filePath = result.filePaths[0];
 		let ext = filePath.substring(filePath.lastIndexOf('.'));
 		let tempFileName = 'temp' + ext;
+
+		// Limpa a pasta temp
+		result = await shared.actions.clearFolder({ folderPath: './temp' });
+
+		if (result.error) {
+			return result;
+		}
 
 		await shared.appData({ key: 'tempFileName', value: tempFileName });
 
@@ -37,8 +43,7 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			toast.show();
-			return;
+			return result;
 		}
 
 		// Abre temp.xls(x) no Excel
@@ -47,16 +52,15 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			toast.show();
-			return;
+			return result;
 		}
-
-		shared.actions.window({ action: 'minimize' });
 
 		return new Promise(resolve => {
 			// Aguarda o Excel abrir
 			const interval = setInterval(async () => {
-				const sheets = await getSheets(false);
+				result = await getSheets();
+
+				const sheets = result.data || [];
 
 				if (sheets.length) {
 					clearInterval(interval);
@@ -81,37 +85,41 @@ export default function srvService() {
 					});
 
 					if (result.error) {
-						toast.show();
-						return;
+						return result;
 					}
 
-					// Ativa a janela da aplicação
-					await shared.actions.window({ action: 'focus' });
-
-					resolve(srvConfig);
+					result.data = srvConfig;
+					resolve(result);
 				}
-			}, 500);
+			}, 1000);
 		});
 	}
 
-	async function openFile() {
+	async function openFile(options = { minimizeWindow }) {
 		let result = await shared.actions.showOpenDialog({
 			title: 'Abrir',
 			filters: [{ name: 'Survey', extensions: ['srv'] }],
 			properties: ['openFile'],
 		});
 
-		if (result.canceled)
-			return;
+		if (result.canceled) {
+			return result;
+		}
+
+		if (options.minimizeWindow)
+			options.minimizeWindow();
 
 		let srvConfig = SrvConfig();
 		const filePath = result.filePaths[0];
-		const toast = Toast({ message: `Falha ao abrir o arquivo.` });
 
 		await shared.appData({ key: 'srvFilePath', value: filePath });
 
 		// Limpa a pasta temp
-		await shared.actions.clearFolder({ folderPath: './temp' });
+		result = await shared.actions.clearFolder({ folderPath: './temp' });
+
+		if (result.error) {
+			return result;
+		}
 
 		// Extrai o conteúdo na pasta temp
 		result = await shared.actions.unzipFile({
@@ -122,8 +130,7 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			toast.show();
-			return;
+			return result;
 		}
 
 		// Cria uma cópia da planilha com o nome padrão se necessário
@@ -139,6 +146,10 @@ export default function srvService() {
 				fromFilePath: './temp/' + oldTempFileName,
 				toFilePath: './temp/' + tempFileName,
 			});
+
+			if (result.error) {
+				return result;
+			}
 		}
 
 		shared.appData({ key: 'tempFileName', value: tempFileName });
@@ -164,10 +175,14 @@ export default function srvService() {
 				srvConfig.info = parseReport(data);
 			}
 
-			await shared.actions.writeFile({
+			result = await shared.actions.writeFile({
 				filePath: './temp/config.json',
 				data: JSON.stringify(srvConfig),
 			});
+
+			if (result.error) {
+				return result;
+			}
 		}
 
 		// Abre spreadsheet.xls(x) no Excel
@@ -176,16 +191,15 @@ export default function srvService() {
 		});
 
 		if (result.error) {
-			toast.show();
-			return;
+			return result;
 		}
-
-		shared.actions.window({ action: 'minimize' });
 
 		return new Promise(resolve => {
 			// Aguarda o Excel abrir
 			const interval = setInterval(async () => {
-				const sheets = await getSheets(false);
+				result = await getSheets();
+
+				const sheets = result.data || [];
 
 				if (sheets.length) {
 					clearInterval(interval);
@@ -213,12 +227,10 @@ export default function srvService() {
 						}
 					});
 
-					// Ativa a janela da aplicação
-					await shared.actions.window({ action: 'focus' });
-
-					resolve(srvConfig);
+					result.data = srvConfig;
+					resolve(result);
 				}
-			}, 500);
+			}, 1000);
 		});
 	}
 
@@ -233,45 +245,41 @@ export default function srvService() {
 			data: JSON.stringify(srvConfig),
 		});
 
+		if (result.error) {
+			return result;
+		}
+
 		// Salva a planilha temp
-		result = shared.actions.execute({
+		result = await shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
 			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=SaveWorkbook'],
-		}).then(result => {
-			console.log(result);
-		}).catch(error => {
-			console.log(error);
 		});
 
-		// Empacota o arquivo .srv
-		const srvFilePath = await shared.appData({ key: 'srvFilePath' });
+		let success = result.data;
 
-		result = await shared.actions.zipFile({
-			fromFolderPath: './temp',
-			toFilePath: srvFilePath,
-		});
+		if (success) {
+			// Empacota o arquivo .srv
+			const srvFilePath = await shared.appData({ key: 'srvFilePath' });
+
+			result = await shared.actions.zipFile({
+				fromFolderPath: './temp',
+				toFilePath: srvFilePath,
+			});
+		}
+
+		return result;
 	}
 
-	async function getSheets(notify = true) {
+	async function getSheets() {
 		// Retorna os nomes das planilhas disponíveis no arquivo do Excel.
 
 		const tempFileName = await shared.appData({ key: 'tempFileName' });
-
-		return shared.actions.execute({
+		const result = await shared.actions.execute({
 			executablePath: __constants.EXCEL_API_PATH,
 			args: [`workbookPath=${__constants.TEMP_FOLDER_PATH}/${tempFileName}`, 'method=GetSheets'],
-		}).then(result => {
-			if (result.data.stdout) {
-				return JSON.parse(result.data.stdout);
-			} else if (notify) {
-				Toast({ message: `Falha ao acessar as planilhas.` }).show();
-			}
-
-			return [];
-		}).catch(error => {
-			Toast({ message: `Falha ao acessar as planilhas.` }).show();
-			return [];
 		});
+
+		return result;
 	}
 }
 

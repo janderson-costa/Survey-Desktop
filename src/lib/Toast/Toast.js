@@ -40,7 +40,7 @@ if (!$toasts) {
 	$toasts.addEventListener('mouseover', () => $toasts.classList.add('scrollable', 'mouseover'));
 	$toasts.addEventListener('mouseout', () => $toasts.classList.remove('scrollable', 'mouseover'));
 
-	document.body.appendChild($toasts);
+	document.body.after($toasts);
 }
 
 export default function Toast(options = {}) {

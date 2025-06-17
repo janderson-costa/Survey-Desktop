@@ -6,6 +6,7 @@ import { AppState } from './models/AppState.js';
 import { SrvConfig } from './models/SrvConfig.js';
 import Menu from './lib/menu/Menu.js';
 import Modal from './lib/Modal/Modal.js';
+import Toast from './lib/Toast/Toast.js';
 import Icon from './components/Icon.js';
 import Buttons from "./components/Buttons.js";
 
@@ -44,6 +45,7 @@ window.actions = {
 };
 
 init();
+observeSheets();
 
 async function init() {
 	window.__constants = await shared.constants();
@@ -67,7 +69,11 @@ async function init() {
 	});
 
 	// Cria a interface do usuário
-	_sheets = await srvService().getSheets();
+	const result = await srvService().getSheets();
+
+	if (result.data)
+		_sheets = result.data;
+
 	_ui = createUI(srvConfig);
 
 	// Carrega a página
@@ -83,16 +89,27 @@ async function init() {
 // ACÕES
 
 async function newFile() {
+	Toast({ message: 'Falha ao criar o arquivo.' }).show();
+	return
 	// Salva o arquivo atual
 	if (_appState.opened && !_appState.saved) {
 		saveFile(!_appState.saved, newFile);
 		return;
 	}
 
-	_srvConfig = await srvService().newFile();
+	let result = await srvService().newFile({
+		minimizeWindow: () => shared.actions.window({ action: 'minimize' }),
+	});
 
-	if (!_srvConfig) return;
+	await shared.actions.window({ action: 'focus' });
 
+	if (result.canceled) return;
+	if (result.error) {
+		Toast({ message: 'Falha ao criar o arquivo.' }).show();
+		return;
+	}
+
+	_srvConfig = result.data;
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
@@ -106,10 +123,19 @@ async function openFile() {
 		return;
 	}
 
-	_srvConfig = await srvService().openFile();
+	let result = await srvService().openFile({
+		minimizeWindow: () => shared.actions.window({ action: 'minimize' }),
+	});
 
-	if (!_srvConfig) return;
+	await shared.actions.window({ action: 'focus' });
 
+	if (result.canceled) return;
+	if (result.error) {
+		Toast({ message: 'Falha ao abrir o arquivo.' }).show();
+		return;
+	}
+
+	_srvConfig = result.data;
 	_appState.opened = true;
 	await shared.appData({ key: 'state', value: _appState });
 	await shared.appData({ key: 'srvConfig', value: _srvConfig });
@@ -581,5 +607,19 @@ function selectTable(table) {
 }
 
 async function observeSheets() {
-	// Observa as planilhas disponíveis no arquivo do Excel.
+	// Observa as planilhas no arquivo do Excel.
+
+	await Utils().pause(1000);
+
+	srvService().getSheets().then(result => {
+		//console.log(result);
+
+		if (result.data) {
+			_sheets = result.data;
+
+			//console.log(_sheets);
+		}
+
+		observeSheets();
+	});
 }

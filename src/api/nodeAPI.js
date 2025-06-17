@@ -220,18 +220,15 @@ async function nodeAPI({ constants, appData, window }) {
 
 		const result = Result();
 
-		return new Promise((resolve, reject) => {
+		return new Promise(resolve => {
 			execFile(options.executablePath, options.args, (error, stdout, stderr) => {
-				if (error) {
-					result.error = error.message;
-					reject(result);
-					return;
+				if (stdout) {
+					const apiResult = JSON.parse(stdout);
+
+					result.data = apiResult.Data;
 				}
 
-				result.data = {
-					stdout: stdout.trim(),
-					stderr: stderr.trim(),
-				};
+				result.error = error ? error.message : stderr || null;
 
 				resolve(result);
 			});

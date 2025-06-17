@@ -1,9 +1,14 @@
 export function Utils() {
 	return {
+		pause,
 		form,
 		observe,
 		css,
 	};
+
+	function pause(time = 1000) {
+		return new Promise(resolve => setTimeout(resolve, time));
+	}
 
 	function form() {
 		return {
