@@ -31,6 +31,7 @@ export default function Modal(options) {
 	let $buttons;
 
 	const _context = {
+		options,
 		show,
 		hide,
 		block,
@@ -88,9 +89,6 @@ export default function Modal(options) {
 
 			if (button.onClick)
 				$button.addEventListener('click', () => button.onClick(_context));
-
-			if (button.name.match(/Cancel|No/))
-				$button.addEventListener('click', hide);
 
 			$buttons.appendChild($button);
 		});

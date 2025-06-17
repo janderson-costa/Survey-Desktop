@@ -35,6 +35,50 @@ const _constants = {
 };
 const _appData = {};
 let _mainWindow;
+const _menu = Menu.buildFromTemplate([
+	{
+		label: 'Arquivo',
+		submenu: [
+			{ label: 'Novo', click: () => actions('newFile()') },
+			{ label: 'Abrir', click: () => actions('openFile()') },
+			{ label: 'Salvar', click: () => actions('saveFile()') },
+			{ label: 'Salvar Como', click: () => actions('saveFileAs()') },
+			{ type: 'separator' },
+			{ label: 'Enviar por E-mail', click: () => actions('sendByEmail()') },
+			{ type: 'separator' },
+			{ label: 'Abrir Local do Arquivo', click: () => actions('openFileLocation()') },
+			{ type: 'separator' },
+			{ label: 'Sair', click: () => _mainWindow.close() },
+		],
+	},
+	{
+		label: 'Exibir',
+		submenu: [
+			{ label: 'Informações do Arquivo', click: () => actions('showFileInfo()') },
+			{ type: 'separator' },
+			{ label: 'Atualizar janela', click: () => _mainWindow.webContents.reloadIgnoringCache() },
+			{ role: 'toggleDevTools', accelerator: 'f12' }
+		],
+	},
+	{
+		label: 'Ferramentas',
+		submenu: [
+			{ label: 'Carregar Dados nas Planilhas' },
+			{ label: 'Limpar Dados das Planilhas' },
+			{ type: 'separator' },
+			{ label: 'Enviar por E-mail' },
+			{ type: 'separator' },
+			{ label: 'Visualizar no Dispositivo Móvel' },
+		],
+	},
+	{
+		label: 'Ajuda',
+		submenu: [
+			{ label: 'Ajuda' },
+			{ label: 'Sobre' },
+		],
+	},
+]);
 
 
 // EXECUÇÃO
@@ -50,53 +94,12 @@ const createWindow = () => {
 			preload: path.join(__dirname, 'api/preload.js'),
 		},
 	});
-	const menu = Menu.buildFromTemplate([
-		{
-			label: 'Arquivo',
-			submenu: [
-				{ label: 'Novo', click: () => actions('newFile') },
-				{ label: 'Abrir', click: () => actions('openFile') },
-				{ label: 'Salvar', click: () => actions('saveFile') },
-				{ label: 'Salvar Como', click: () => actions('saveFileAs') },
-				{ type: 'separator' },
-				{ label: 'Enviar por E-mail', click: () => actions('sendByEmail') },
-				{ type: 'separator' },
-				{ label: 'Abrir Local do Arquivo', click: () => actions('openFileLocation') },
-				{ type: 'separator' },
-				{ label: 'Sair', click: () => actions('exit') },
-			],
-		},
-		{
-			label: 'Exibir',
-			submenu: [
-				{ label: 'Informações do Arquivo', click: () => actions('showFileInfo') },
-				{ type: 'separator' },
-				{ label: 'Atualizar janela', click: () => _mainWindow.webContents.reloadIgnoringCache() },
-				{ role: 'toggleDevTools', accelerator: 'f12' }
-			],
-		},
-		{
-			label: 'Ferramentas',
-			submenu: [
-				{ label: 'Carregar Dados nas Planilhas' },
-				{ label: 'Limpar Dados das Planilhas' },
-				{ type: 'separator' },
-				{ label: 'Enviar por E-mail' },
-				{ type: 'separator' },
-				{ label: 'Visualizar no Dispositivo Móvel' },
-			],
-		},
-		{
-			label: 'Ajuda',
-			submenu: [
-				{ label: 'Ajuda' },
-				{ label: 'Sobre' },
-			],
-		},
-	]);
 
-	Menu.setApplicationMenu(menu);
+	Menu.setApplicationMenu(_menu);
 	_mainWindow.loadFile(_constants.INDEX_URL);
+
+	// Eventos
+	_mainWindow.on('close', closeWindow);
 };
 
 app.whenReady().then(() => {
@@ -111,5 +114,33 @@ app.whenReady().then(() => {
 function actions(functionName) {
 	// window.actions: Implementados no arquivo index.js
 
-	_mainWindow.webContents.executeJavaScript(`window.actions.${functionName}()`);
+	return _mainWindow.webContents.executeJavaScript(`window.actions.${functionName}`);
+}
+
+async function closeWindow(event) {
+	event.preventDefault();
+
+	// Verifica se o arquivo foi salvo
+	if (_appData.state && !_appData.state.saved) {
+		let result = await actions('saveFile(true)'); // true | false | 'canceled' | 'error'
+
+		if (typeof result == 'boolean')
+			close();
+	} else {
+		close();
+	}
+
+	async function close() {
+		// Fecha o arquivo temp.xls(x)
+		const result = await actions('closeWorkbook()');
+
+		console.log(result);
+
+		if (result.error) {
+			alert(`Não foi possível fechar o arquivo temp.xls(x)<br>${result.error}`);
+			return;
+		}
+
+		_mainWindow.destroy(); // Fecha forçado
+	}
 }

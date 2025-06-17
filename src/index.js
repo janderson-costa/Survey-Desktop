@@ -32,16 +32,19 @@ let _ui = {
 };
 let _appState = AppState();
 let _srvConfig = SrvConfig();
+let _srvFileName;
 let _sheets = [];
 let _dataTables = [];
 let _activeDataTable;
 let _temp;
 
+// Usado pelo main.js
 window.actions = {
 	newFile,
 	openFile,
 	saveFile,
 	showFileInfo,
+	closeWorkbook: srvService().closeWorkbook,
 };
 
 init();
@@ -51,6 +54,7 @@ async function init() {
 	window.__constants = await shared.constants();
 	_appState = await shared.appData({ key: 'state' }) || _appState;
 	_srvConfig = await shared.appData({ key: 'srvConfig' }) || _srvConfig;
+	_srvFileName = await shared.appData({ key: 'srvFileName' }) || '';
 	_dataTables = [];
 	_temp = true;
 
@@ -91,7 +95,11 @@ async function init() {
 async function newFile() {
 	// Salva o arquivo atual
 	if (_appState.opened && !_appState.saved) {
-		saveFile(!_appState.saved, newFile);
+		const saved = await saveFile(!_appState.saved);
+
+		if (saved == true)
+			newFile();
+
 		return;
 	}
 
@@ -126,7 +134,11 @@ async function newFile() {
 async function openFile() {
 	// Salva o arquivo atual
 	if (_appState.opened && !_appState.saved) {
-		saveFile(!_appState.saved, newFile);
+		const saved = await saveFile(!_appState.saved);
+
+		if (saved == true)
+			newFile();
+
 		return;
 	}
 
@@ -158,44 +170,52 @@ async function openFile() {
 	init();
 }
 
-async function saveFile(confirm = false, callback) {
-	let modal;
-
+async function saveFile(confirm = false) {
 	// Confirmar se deseja salvar as alterações
 	if (confirm) {
-		modal = Modal({
-			title: 'Survey',
-			content: 'Deseja salvar as alterações?',
-			width: 360,
-			hideOut: true,
-			buttons: [
-				{ name: 'Sim', primary: true, onClick: () => save()},
-				{ name: 'Não', onClick: () => modal.hide() },
-			],
+		return new Promise(async resolve => {
+			Modal({
+				title: 'Survey',
+				content: `Deseja salvar as alterações em ${_srvFileName}?`,
+				hideOut: false,
+				buttons: [
+					{ name: 'Savar', primary: true, onClick: async modal => {
+						modal.hide();
+						resolve(await save());
+					}},
+					{ name: 'Não salvar', onClick: modal => {
+						modal.hide();
+						resolve(false);
+					}},
+					{ name: 'Cancelar', onClick: modal => {
+						modal.hide();
+						resolve('canceled');
+					}},
+				],
+			}).show();
 		});
-
-		modal.show();
 	} else {
-		save();
+		return save();
 	}
 
 	async function save() {
 		let result = await srvService().saveFile(_srvConfig);
 
 		if (result.error) {
-			Toast({ message: `Falha ao salvar o arquivo: ${result.error}` }).show();
-			return;
+			Modal({
+				title: 'Survey',
+				content: `Falha ao salvar ${_srvFileName}<br>${result.error}`,
+				buttons: [{ name: 'OK', onClick: modal => modal.hide() }],
+			}).show();
+
+			return 'error';
 		}
 
 		_appState.saved = true;
 		await shared.appData({ key: 'state', value: _appState });
 		setWindowTitle();
 
-		if (modal)
-			modal.hide();
-
-		if (callback)
-			callback();
+		return true;
 	}
 }
 
@@ -631,8 +651,6 @@ async function observeSheets() {
 	await Utils().pause(1000);
 
 	srvService().getSheets().then(async result => {
-		console.log(result);
-
 		if (result.data) {
 			_sheets = result.data;
 
@@ -643,22 +661,24 @@ async function observeSheets() {
 		if (_appState.opened && !result.data) {
 			Modal({
 				title: 'Survey',
-				content: 'Mantenha a planilha temp.xls(x) aberta enquanto executa o aplicativo.',
+				content: 'Mantenha o arquivo temp.xls(x) aberto enquanto executa o aplicativo.',
+				hideOut: false,
 				buttons: [
-					{ name: 'OK', focused: true, onClick: modal => modal.hide() },
+					{ name: 'OK', onClick: async modal => {
+						modal.hide();
+
+						// Abre o arquivo novamente
+						await shared.actions.openFile({
+							filePath: __constants.TEMP_FOLDER_PATH + '/' + await shared.appData({ key: 'tempFileName' }),
+						});
+
+						await Utils().pause(5000);
+						observeSheets();
+					}},
 				]
 			}).show();
 
-			// Abre o arquivo
-			result = await shared.actions.openFile({
-				filePath: __constants.TEMP_FOLDER_PATH + '/' + await shared.appData({ key: 'tempFileName' }),
-			});
-
-			if (result.error) {
-				Toast({ message: `Falha ao abrir o arquivo.<br>${result.error}` }).show();
-			}
-
-			await Utils().pause(3000);
+			return;
 		}
 
 		observeSheets();

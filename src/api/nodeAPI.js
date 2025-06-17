@@ -223,9 +223,9 @@ async function nodeAPI({ constants, appData, window }) {
 		return new Promise(resolve => {
 			execFile(options.executablePath, options.args, (error, stdout, stderr) => {
 				if (stdout) {
-					const apiResult = JSON.parse(stdout);
+					const programResult = JSON.parse(stdout);
 
-					result.data = apiResult.Data;
+					result.data = programResult.Data;
 				}
 
 				result.error = error ? error.message : stderr || null;

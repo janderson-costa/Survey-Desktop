@@ -111,8 +111,10 @@ export default function srvService() {
 
 		let srvConfig = SrvConfig();
 		const filePath = result.filePaths[0];
+		const fileName = filePath.substring(filePath.lastIndexOf('\\') + 1);
 
 		await shared.appData({ key: 'srvFilePath', value: filePath });
+		await shared.appData({ key: 'srvFileName', value: fileName });
 
 		// Limpa a pasta temp
 		result = await shared.actions.clearFolder({ folderPath: './temp' });
